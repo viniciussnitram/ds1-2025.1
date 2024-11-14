@@ -14,6 +14,23 @@ const table = [
 ]
 
 export default function Sala() {
+
+  const [tabela, setTabela] = useState([]);
+
+  useEffect(() => {
+    const getData = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/Discip")
+        setTabela(response.data);
+        console.log("data", response.data);
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    getData();
+  }, [])
+
   return (
     <main className="w-full min-h-screen">
       <div className="w-full flex font-bold text-3xl justify-center mt-4 mb-8">Visualizar Salas</div>
@@ -70,7 +87,7 @@ export default function Sala() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {table.map((row) => (
+              {tabela.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell className="">{row.id}</TableCell>
                   <TableCell>{row.disciplina}</TableCell>

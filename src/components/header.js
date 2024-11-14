@@ -7,6 +7,7 @@ export const siteRoutes = [
   { href: '/indisponibilidade', label: 'Indisponibilidade' },
   { href: '/sala', label: 'Sala' },
   { href: '/alocarSala', label: 'Alocar Sala' },
+  { href: '/alocarTurmaSala', label: 'Alocar Turma Sala' },
 ]
 
 export default function Header() {
