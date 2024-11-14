@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react"
 import axios from 'axios';
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -9,6 +11,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 const table = [
   {
@@ -79,7 +90,7 @@ export default function Indisponibilidade() {
     <main className="w-full min-h-screen">
       <div className="w-full flex font-bold text-3xl justify-center mt-4 mb-8">Indisponibilizar Sala</div>
 
-      <div className="grid w-full grid-cols-1">
+      <div className="grid grid-cols-1 sm:grid-cols-3">
         <div className="grid ml-4 mr-4 mt-2">
           <label className="text-xl">Bloco:</label>
           <input
@@ -97,7 +108,7 @@ export default function Indisponibilidade() {
         </div>
       </div>
 
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6 w-full mx-auto">
         <div className="w-full flex font-bold text-3xl justify-center mt-4 mb-8">Disciplinas Disponíveis</div>
 
         <div className="border rounded-lg p-2">
@@ -123,7 +134,7 @@ export default function Indisponibilidade() {
                   <TableCell>{row.capacidadeMaxima}</TableCell>
                   <TableCell>{row.possuiLaboratorio ? "Sim" : "Não"}</TableCell>
                   <TableCell>{row.possuiArCondicionado ? "Sim" : "Não"}</TableCell>
-                  <TableCell>{row.possuiLoucaDigital ? "Sim" : "Não"}</TableCell>
+                  <TableCell>{row.possuiLousaDigital ? "Sim" : "Não"}</TableCell>
                   <TableCell>
 
                   </TableCell>
@@ -134,7 +145,27 @@ export default function Indisponibilidade() {
         </div>
 
         <div>
-          <button>Salvar</button>
+          <Dialog>
+            <DialogTrigger>
+              <button className="rounded-md bg-blue-600 text-white p-1.5 mr-2 w-[200px]">
+                Salvar
+              </button>
+            </DialogTrigger>
+
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Salvar</DialogTitle>
+                <DialogDescription>Tem certeza que deseja salvar?</DialogDescription>
+              </DialogHeader>
+
+              <form>
+                <DialogFooter>
+                  <Button type="button" variant="outline">Cancelar</Button>
+                  <Button type="button" >Sim</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 

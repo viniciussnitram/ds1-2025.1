@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from 'next/navigation';
 
 export const siteRoutes = [
+  { href: '/', label: 'Inicio' },
   { href: '/indisponibilidade', label: 'Indisponibilidade' },
   { href: '/sala', label: 'Sala' },
   { href: '/alocarSala', label: 'Alocar Sala' },
@@ -16,7 +17,7 @@ export default function Header() {
 
         <div className="flex items-center">
           <img src="./femasslogo.jpg" className="h-[60px] w-[80px] rounded-md" />
-          <div className="font-bold ml-2">Desenvolvimento de Sistemas 1</div>
+          <div className="font-bold ml-2 text-xl">Desenvolvimento de Sistemas 1</div>
         </div>
       </Link>
       <ul className="hidden gap-x-2 sm:flex text-sm">
