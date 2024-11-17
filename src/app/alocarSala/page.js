@@ -11,6 +11,20 @@ import {
   TableRow,
 } from "@/components/ui/table"
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Search } from 'lucide-react'
+
 import { useState, useEffect } from "react"
 import axios from 'axios';
 
@@ -129,6 +143,80 @@ export default function AlocarSala() {
         </div>
 
       </form>
+
+      <br></br>
+
+      <Dialog>
+            <DialogTrigger>
+              <button className="rounded-md bg-blue-600 text-white p-2">
+                Indisponibilidade
+              </button>
+            </DialogTrigger>
+
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Indisponibilidade</DialogTitle>
+                <DialogDescription>Tem certeza que deseja encerar o período letivo?</DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="bloco" className="text-right">
+              Bloco
+            </Label>
+            <select className="rounded-md border p-2">
+            <option value="">Selecione um bloco</option>
+            {tabela.map((row) => (
+              <option key={row.id} value={row.id}>
+                {row.bloco}
+              </option>
+            ))}
+          </select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="numero" className="text-right">
+              Numero
+            </Label>
+            <select className="rounded-md border p-2">
+            <option value="">Selecione uma numero da sala</option>
+            {tabela.map((row) => (
+              <option key={row.id} value={row.id}>
+                {row.numero}
+              </option>
+            ))}
+          </select>
+          </div>
+        </div>
+
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="horario" className="text-right">
+              Horario
+            </Label>
+            
+            <select
+              id="horario"
+              className="col-span-3">
+
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+            </select>
+
+          </div>
+        </div>
+
+              <form>
+                <DialogFooter>
+                  <Button type="button" variant="outline">Cancelar</Button>
+                  <Button type="button" >Sim</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+
       <div>
         <Input
           placeholder="Filtrar"

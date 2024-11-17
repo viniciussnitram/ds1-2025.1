@@ -8,6 +8,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
+import { Label } from "@/components/ui/label"
+
+import { Input } from "@/components/ui/input"
+
+import { Button } from "@/components/ui/button"
 
 import { Search } from 'lucide-react'
 
@@ -22,7 +37,7 @@ export default function Sala() {
   useEffect(() => {
     const getData = async () => {
       try {
-        const response = await axios.get("http://localhost:5000/api/Discip")
+        const response = await axios.get("http://localhost:5000/api/Sala")
         setTabela(response.data);
         console.log("data", response.data);
       } catch (error) {
@@ -74,7 +89,9 @@ export default function Sala() {
           </button>
         </div>
       </div>
-
+  <div>
+  
+</div>
       <div className="p-6 max-w-full mx-auto">
         <div className="w-full flex font-bold text-3xl justify-center mt-4 mb-8">Disciplinas Disponíveis</div>
 
