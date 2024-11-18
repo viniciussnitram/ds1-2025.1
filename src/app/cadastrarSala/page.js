@@ -34,20 +34,21 @@ export default function cadastrarSala() {
   const [lab, setLab] = useState(false);
   const [lousa, setLousa] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [indisponibilidadeOpen, setIndisponibilidadeOpen] = useState(false);
   const [selectedBloco, setSelectedBloco] = useState("");
   const [selectedSalaId, setSelectedSalaId] = useState(0);
-const [selectedHorario, setSelectedHorario] = useState(0);
-const [isDialogEditOpen, setIsDialogEditOpen] = useState(false);
-const [isDialogDeleteOpen, setIsDialogDeleteOpen] = useState(false);
-const [editSala, setEditSala] = useState({
-  id: "",
-  bloco: "",
-  numero: "",
-  capacidadeMaxima: "",
-  possuiArCondicionado: false,
-  possuiLaboratorio: false,
-  possuiLoucaDigital: false,
-});
+  const [selectedHorario, setSelectedHorario] = useState(0);
+  const [isDialogEditOpen, setIsDialogEditOpen] = useState(false);
+  const [isDialogDeleteOpen, setIsDialogDeleteOpen] = useState(false);
+  const [editSala, setEditSala] = useState({
+    id: "",
+    bloco: "",
+    numero: "",
+    capacidadeMaxima: "",
+    possuiArCondicionado: false,
+    possuiLaboratorio: false,
+    possuiLoucaDigital: false,
+  });
 
   useEffect(() => {
     const getSala = async () => {
@@ -73,7 +74,6 @@ const [editSala, setEditSala] = useState({
         bloco: bloco,
         numero: numero,
       };
-      console.log("sala", sala);
       const response = await axios.post("http://localhost:5000/api/Sala", sala);
       setTabela((prevTabela) => [...prevTabela, response.data]);
     } catch (error) {
@@ -87,13 +87,13 @@ const [editSala, setEditSala] = useState({
 
     try {
       const indisponibilidade = {
-        salaId: selectedSalaId,
-        diaSemana: 0,
-        tempo: selectedHorario,
+        salaId: parseInt(selectedSalaId),
+        diaSemana: 1,
+        tempo: parseInt(selectedHorario),
       };
-      console.log("indisponibilidade", indisponibilidade);
 
-      //const response = await axios.post(`http://localhost:5000/api/Sala/${selectedSalaId}/indisponibilidade`, indisponibilidade);
+      const response = await axios.post(`http://localhost:5000/api/Sala/${selectedSalaId}/indisponibilidade`, indisponibilidade);
+      setIndisponibilidadeOpen(false);
     } catch (error) {
       alert(error.response.data.errors);
       console.log(error);
@@ -265,8 +265,8 @@ const [editSala, setEditSala] = useState({
             </div>
 
             <div>
-              <Dialog>
-                <DialogTrigger>
+              <Dialog open={indisponibilidadeOpen} onOpenChange={setIndisponibilidadeOpen}>
+                <DialogTrigger asChild>
                   <button className="rounded-md bg-blue-600 text-white p-1.5 mr-2 w-[200px]">
                     Indisponibilidade
                   </button>
@@ -301,7 +301,7 @@ const [editSala, setEditSala] = useState({
                       <Label htmlFor="numero" className="text-right">
                         Numero
                       </Label>
-                      <select 
+                      <select
                         className="rounded-md border p-2 col-span-3"
                         value={selectedSalaId}
                         onChange={(e) => setSelectedSalaId(e.target.value)}
@@ -328,6 +328,7 @@ const [editSala, setEditSala] = useState({
                         value={selectedHorario}
                         onChange={(e) => setSelectedHorario(e.target.value)}
                       >
+                        <option>Selecione um horário</option>
                         <option value="1">1</option>
                         <option value="2">2</option>
                         <option value="3">3</option>
@@ -338,17 +339,16 @@ const [editSala, setEditSala] = useState({
                     </div>
                   </div>
 
-                  <form>
-                    <DialogFooter>
-                      <Button type="button" variant="outline">
-                        Cancelar
-                      </Button>
-                      <Button type="button" onClick={postIndisponibilidade}>Sim</Button>
-                    </DialogFooter>
-                  </form>
+                  <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIndisponibilidadeOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button type="button" onClick={postIndisponibilidade}>Sim</Button>
+                  </DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>
+
           </div>
         </div>
 
@@ -391,7 +391,7 @@ const [editSala, setEditSala] = useState({
                     </TableCell>
                     <TableCell>
                       <button className="mr-2">
-                        <Pencil onClick={() => handleEditSala(row)}/>
+                        <Pencil onClick={() => handleEditSala(row)} />
                       </button>
                       <button onClick={() => handleOpenDeleteDialog(row)}>
                         <Trash2 />
@@ -404,7 +404,7 @@ const [editSala, setEditSala] = useState({
         </div>
       </div>
 
-<Dialog open={isDialogEditOpen} onOpenChange={setIsDialogEditOpen}>
+      <Dialog open={isDialogEditOpen} onOpenChange={setIsDialogEditOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Sala</DialogTitle>
@@ -431,31 +431,43 @@ const [editSala, setEditSala] = useState({
                 onChange={(e) => handleEditChange("capacidadeMaxima", e.target.value)}
               />
             </div>
-            <div className="flex items-center gap-4">
-              <Label>
-                <input
-                  type="checkbox"
-                  checked={editSala.possuiArCondicionado}
-                  onChange={(e) => handleEditChange("possuiArCondicionado", e.target.checked)}
-                />
-                Ar
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="username" className="text-right">
+                Ar:
               </Label>
-              <Label>
-                <input
-                  type="checkbox"
-                  checked={editSala.possuiLaboratorio}
-                  onChange={(e) => handleEditChange("possuiLaboratorio", e.target.checked)}
-                />
-                Lab
+              <Input
+                id="username"
+                className="col-span-3"
+                type="checkbox"
+                checked={editSala.possuiArCondicionado}
+                onChange={(e) => handleEditChange("possuiArCondicionado", e.target.checked)}
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="username" className="text-right">
+                Laboratório:
               </Label>
-              <Label>
-                <input
-                  type="checkbox"
-                  checked={editSala.possuiLoucaDigital}
-                  onChange={(e) => handleEditChange("possuiLoucaDigital", e.target.checked)}
-                />
-                Lousa Digital
+              <Input
+                id="username"
+                className="col-span-3"
+                type="checkbox"
+                checked={editSala.possuiLaboratorio}
+                onChange={(e) => handleEditChange("possuiLaboratorio", e.target.checked)}
+              />
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="username" className="text-right">
+                Lousa Digital:
               </Label>
+              <Input
+                id="username"
+                className="col-span-3"
+                type="checkbox"
+                checked={editSala.possuiLoucaDigital}
+                onChange={(e) => handleEditChange("possuiLoucaDigital", e.target.checked)}
+              />
             </div>
           </div>
           <DialogFooter>
@@ -468,21 +480,21 @@ const [editSala, setEditSala] = useState({
       </Dialog>
 
       <Dialog open={isDialogDeleteOpen} onOpenChange={setIsDialogDeleteOpen}>
-  <DialogContent>
-    <DialogHeader>
-      <DialogTitle>Excluir Sala</DialogTitle>
-    </DialogHeader>
-    <p>Tem certeza que deseja excluir a sala {editSala.numero} do bloco {editSala.bloco}?</p>
-    <DialogFooter>
-      <Button variant="outline" onClick={() => setIsDialogDeleteOpen(false)}>
-        Cancelar
-      </Button>
-      <Button variant="destructive" onClick={handleDeleteSala}>
-        Excluir
-      </Button>
-    </DialogFooter>
-  </DialogContent>
-</Dialog>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir Sala</DialogTitle>
+          </DialogHeader>
+          <p>Tem certeza que deseja excluir a sala {editSala.numero} do bloco {editSala.bloco}?</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDialogDeleteOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteSala}>
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </main>
   );

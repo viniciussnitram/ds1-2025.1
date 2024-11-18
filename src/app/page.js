@@ -69,7 +69,8 @@ export default function Home() {
       formData.append("file", selectedFile);
 
       console.log("Enviando arquivo:", selectedFile);
-
+      setTabelaOriginal([]);
+      setTabela([]);
       setDialogOpen(false);
     } catch (error) {
       console.error("Erro ao enviar o arquivo:", error);
