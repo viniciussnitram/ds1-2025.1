@@ -24,7 +24,7 @@ import { Trash2 } from "lucide-react";
 import { Pencil } from "lucide-react";
 import axios from "axios";
 
-export default function cadastrarSala() {
+export default function CadastrarSala() {
   const [filterValue, setFilterValue] = useState("");
   const [tabela, setTabela] = useState([]);
   const [bloco, setBloco] = useState("");
