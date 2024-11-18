@@ -4,9 +4,7 @@ import { usePathname } from 'next/navigation';
 
 export const siteRoutes = [
   { href: '/', label: 'Inicio' },
-  { href: '/indisponibilidade', label: 'Indisponibilidade' },
-  { href: '/sala', label: 'Sala' },
-  { href: '/alocarSala', label: 'Alocar Sala' },
+  { href: '/cadastrarSala', label: 'Cadastrar Sala' },
   { href: '/alocarTurmaSala', label: 'Alocar Turma Sala' },
 ]
 

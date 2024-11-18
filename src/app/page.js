@@ -27,6 +27,7 @@ export default function Home() {
   const [filterValue, setFilterValue] = useState('');
   const [tabelaOriginal, setTabelaOriginal] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleFileUpload = (e) => {
     setTabela([]);
@@ -58,20 +59,22 @@ export default function Home() {
   }
 
   const handleUploadExcel = async () => {
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-
     try {
-      const response = await axios.post("/api/Turma/importar-excel-turmas", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      console.log(response.data);
+      if (!selectedFile) {
+        alert("Por favor, selecione um arquivo.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+
+      console.log("Enviando arquivo:", selectedFile);
+
+      setDialogOpen(false);
     } catch (error) {
       console.error("Erro ao enviar o arquivo:", error);
     }
-  }
+  };
 
   return (
     <main className="min-h-screen mb-20">
@@ -129,11 +132,12 @@ export default function Home() {
                   onChange={(e) => setFilterValue(e.target.value)}
                 />
                 <div>
-                  <Dialog>
-                    <DialogTrigger>
+                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <DialogTrigger asChild>
                       <button
                         className="rounded-md bg-blue-600 text-white p-1.5 mr-2 w-[200px]"
                         disabled={!selectedFile} // Desabilita o botão se não houver arquivo
+                        onClick={() => setDialogOpen(true)}
                       >
                         Confirmar Importação
                       </button>
@@ -141,7 +145,7 @@ export default function Home() {
 
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle>Importar</DialogTitle>
+                        <DialogTitle className="text-xl">Importar</DialogTitle>
                         <DialogDescription>
                           Tem certeza que deseja importar a tabela do excel?
                         </DialogDescription>
@@ -149,7 +153,7 @@ export default function Home() {
 
                       <form>
                         <DialogFooter>
-                          <Button type="button" variant="outline">
+                          <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
                             Cancelar
                           </Button>
                           <Button type="button" onClick={handleUploadExcel}>
