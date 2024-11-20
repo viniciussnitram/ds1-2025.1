@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "Desenvolvimento de Sistemas 1",
-  description: "Site da Paróquia São José Operario",
+  description: "Site para Alocação de turmas da faculdade FEMASS",
 };
 
 export default function RootLayout({ children }) {

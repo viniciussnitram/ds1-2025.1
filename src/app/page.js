@@ -77,6 +77,14 @@ export default function Home() {
     }
   };
 
+  const handleEncerrarPeriodo = async () => {
+    try {
+      const response = await axios.post("http://localhost:5000/api/Turma/limpar-semestre");
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
   return (
     <main className="min-h-screen mb-20">
       <div className="w-full flex font-bold text-4xl justify-center mt-4 mb-8">FEMASS</div>
@@ -108,7 +116,7 @@ export default function Home() {
               <form>
                 <DialogFooter>
                   <Button type="button" variant="outline">Cancelar</Button>
-                  <Button type="button" >Sim</Button>
+                  <Button type="button" onClick={handleEncerrarPeriodo}>Sim</Button>
                 </DialogFooter>
               </form>
             </DialogContent>
