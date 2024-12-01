@@ -103,14 +103,14 @@ export default function Home() {
           <Dialog>
             <DialogTrigger>
               <button className="rounded-md bg-blue-600 text-white p-2">
-                Encerar Período Letivo
+                Encerrar Período Letivo
               </button>
             </DialogTrigger>
 
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Encerar Período Letivo</DialogTitle>
-                <DialogDescription>Tem certeza que deseja encerar o período letivo?</DialogDescription>
+                <DialogTitle>Encerrar Período Letivo</DialogTitle>
+                <DialogDescription>Tem certeza que deseja encerrar o período letivo?</DialogDescription>
               </DialogHeader>
 
               <form>
