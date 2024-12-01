@@ -257,7 +257,7 @@ export default function CadastrarSala() {
                       Cancelar
                     </Button>
                     <Button type="submit" onClick={postSala}>
-                      Savar
+                      Salvar
                     </Button>
                   </DialogFooter>
                 </DialogContent>
