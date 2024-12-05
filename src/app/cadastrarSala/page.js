@@ -91,21 +91,30 @@ export default function CadastrarSala() {
 
   const postIndisponibilidade = async () => {
     event.preventDefault();
-
+  
     try {
       const indisponibilidade = {
         salaId: parseInt(selectedSalaId),
-        diaSemana: parseInt(selectedSalaId),
+        diaSemana: parseInt(selectedDiaSemana),
         tempo: parseInt(selectedHorario),
       };
-
-      const response = await axios.post(`http://localhost:5000/api/Sala/${selectedSalaId}/indisponibilidade`, indisponibilidade);
+  
+      // Faz a requisição POST para adicionar a indisponibilidade
+      await axios.post(
+        `http://localhost:5000/api/Sala/${selectedSalaId}/indisponibilidade`,
+        indisponibilidade
+      );
+  
+      // Atualiza as indisponibilidades buscando do banco
+      await fetchIndisponibilidades(selectedSalaId);
+  
+      // Fecha o modal de adicionar indisponibilidade
       setIndisponibilidadeOpen(false);
     } catch (error) {
       alert(error.response.data.errors);
-      console.log(error);
+      console.error("Erro ao adicionar indisponibilidade:", error);
     }
-  };
+  };  
 
   const handleEditSala = (sala) => {
     setEditSala({ ...sala }); // Preenche o estado com os dados da sala selecionada
@@ -160,6 +169,15 @@ export default function CadastrarSala() {
       console.error("Erro ao buscar os dados da sala:", error);
     }
   };
+
+  //organiza as indisponibilidades em um formato que facilite a exibição
+  const organizeIndisponibilidades = () => {
+    const tabela = Array(3).fill(null).map(() => Array(5).fill(null)); // 3 horários, 5 dias
+    indisponibilidades.forEach(({ diaSemana, tempo }) => {
+      tabela[tempo - 1][diaSemana - 1] = "X"; // Marca o horário indisponível
+    });
+    return tabela;
+  };  
   
   return (
     <main className="w-full min-h-screen">
@@ -525,22 +543,40 @@ export default function CadastrarSala() {
 
       {/*Modal para Exibir Indisponibilidades*/}
       <Dialog open={isIndisponibilidadeListOpen} onOpenChange={setIsIndisponibilidadeListOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Indisponibilidades</DialogTitle>
           </DialogHeader>
-          <div>
-            {indisponibilidades.length > 0 ? (
-              <ul>
-                {indisponibilidades.map((indisponibilidade) => (
-                  <li key={indisponibilidade.id}>
-                    Dia da Semana: {indisponibilidade.diaSemana}, Tempo: {indisponibilidade.tempo}
-                  </li>
+          <div className="overflow-x-auto">
+            <table className="table-auto border-collapse border border-gray-200 w-full text-center text-sm">
+              <thead>
+                <tr>
+                  <th className="border border-gray-300 px-2 py-1">Horário</th>
+                  <th className="border border-gray-300 px-2 py-1">Segunda</th>
+                  <th className="border border-gray-300 px-2 py-1">Terça</th>
+                  <th className="border border-gray-300 px-2 py-1">Quarta</th>
+                  <th className="border border-gray-300 px-2 py-1">Quinta</th>
+                  <th className="border border-gray-300 px-2 py-1">Sexta</th>
+                </tr>
+              </thead>
+              <tbody>
+                {organizeIndisponibilidades().map((linha, i) => (
+                  <tr key={i}>
+                    <td className="border border-gray-300 px-2 py-1">{i + 1}</td>
+                    {linha.map((celula, j) => (
+                      <td
+                        key={j}
+                        className={`border border-gray-300 px-2 py-1 ${
+                          celula ? "bg-red-300" : "bg-green-300"
+                        }`}
+                      >
+                        {celula || ""}
+                      </td>
+                    ))}
+                  </tr>
                 ))}
-              </ul>
-            ) : (
-              <p>Nenhuma indisponibilidade encontrada.</p>
-            )}
+              </tbody>
+            </table>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsIndisponibilidadeListOpen(false)}>
@@ -549,6 +585,7 @@ export default function CadastrarSala() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       <Dialog open={isDialogDeleteOpen} onOpenChange={setIsDialogDeleteOpen}>
         <DialogContent>
