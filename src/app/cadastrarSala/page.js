@@ -22,6 +22,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Trash2 } from "lucide-react";
 import { Pencil } from "lucide-react";
+import { Eye } from "lucide-react";
 import axios from "axios";
 
 export default function CadastrarSala() {
@@ -35,6 +36,12 @@ export default function CadastrarSala() {
   const [lousa, setLousa] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [indisponibilidadeOpen, setIndisponibilidadeOpen] = useState(false);
+  //pega dia da semana e horario
+  const [selectedDiaSemana, setSelectedDiaSemana] = useState("");
+  //visualizar indisponibilidade
+  const [indisponibilidades, setIndisponibilidades] = useState([]);
+  const [isIndisponibilidadeListOpen, setIsIndisponibilidadeListOpen] = useState(false);
+
   const [selectedBloco, setSelectedBloco] = useState("");
   const [selectedSalaId, setSelectedSalaId] = useState(0);
   const [selectedHorario, setSelectedHorario] = useState(0);
@@ -88,7 +95,7 @@ export default function CadastrarSala() {
     try {
       const indisponibilidade = {
         salaId: parseInt(selectedSalaId),
-        diaSemana: 1,
+        diaSemana: parseInt(selectedSalaId),
         tempo: parseInt(selectedHorario),
       };
 
@@ -140,6 +147,20 @@ export default function CadastrarSala() {
     }
   };
 
+  //Função para Buscar Indisponibilidades
+  const fetchIndisponibilidades = async (salaId) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/Sala/${salaId}`);
+      console.log("Dados da sala recebidos:", response.data);
+  
+      // Atualiza o estado com as indisponibilidades
+      setIndisponibilidades(response.data.indisponibilidades || []);
+      setIsIndisponibilidadeListOpen(true); // Abre o modal
+    } catch (error) {
+      console.error("Erro ao buscar os dados da sala:", error);
+    }
+  };
+  
   return (
     <main className="w-full min-h-screen">
       <div className="w-full flex font-bold text-4xl justify-center mt-4 mb-8">
@@ -257,7 +278,7 @@ export default function CadastrarSala() {
                       Cancelar
                     </Button>
                     <Button type="submit" onClick={postSala}>
-                      Savar
+                      Salvar
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -314,6 +335,24 @@ export default function CadastrarSala() {
                               {row.numero}
                             </option>
                           ))}
+                      </select>
+                    </div>
+
+                    {/* Seleção do Dia da Semana */}
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="diaSemana" className="text-right">Dia da Semana</Label>
+                      <select
+                        id="diaSemana"
+                        className="rounded-md border p-2 col-span-3"
+                        value={selectedDiaSemana}
+                        onChange={(e) => setSelectedDiaSemana(e.target.value)}
+                      >
+                        <option value="">Selecione um dia</option>
+                        <option value="1">Segunda-feira</option>
+                        <option value="2">Terça-feira</option>
+                        <option value="3">Quarta-feira</option>
+                        <option value="4">Quinta-feira</option>
+                        <option value="5">Sexta-feira</option>
                       </select>
                     </div>
 
@@ -387,11 +426,19 @@ export default function CadastrarSala() {
                       {row.possuiLoucaDigital ? "Sim" : "Não"}
                     </TableCell>
                     <TableCell>
-                      <button className="mr-2">
+                      {/* Botão de Editar */}
+                      <button className="mr-2 text-blue-500 hover:text-blue-700">
                         <Pencil onClick={() => handleEditSala(row)} />
                       </button>
-                      <button onClick={() => handleOpenDeleteDialog(row)}>
+
+                      {/* Botão de Excluir */}
+                      <button className="mr-2 text-red-500 hover:text-red-700" onClick={() => handleOpenDeleteDialog(row)}>
                         <Trash2 />
+                      </button>
+
+                      {/* Botão de Visualizar */}
+                      <button className="mr-2 text-green-500 hover:text-green-700" onClick={() => fetchIndisponibilidades(row.id)}>
+                        <Eye />
                       </button>
                     </TableCell>
                   </TableRow>
@@ -472,6 +519,33 @@ export default function CadastrarSala() {
               Cancelar
             </Button>
             <Button onClick={handleUpdateSala}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/*Modal para Exibir Indisponibilidades*/}
+      <Dialog open={isIndisponibilidadeListOpen} onOpenChange={setIsIndisponibilidadeListOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Indisponibilidades</DialogTitle>
+          </DialogHeader>
+          <div>
+            {indisponibilidades.length > 0 ? (
+              <ul>
+                {indisponibilidades.map((indisponibilidade) => (
+                  <li key={indisponibilidade.id}>
+                    Dia da Semana: {indisponibilidade.diaSemana}, Tempo: {indisponibilidade.tempo}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Nenhuma indisponibilidade encontrada.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsIndisponibilidadeListOpen(false)}>
+              Fechar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
