@@ -329,11 +329,11 @@ export default function CadastrarSala() {
                         onChange={(e) => setSelectedDiaSemana(e.target.value)}
                       >
                         <option value="">Selecione um dia</option>
-                        <option value="0">Segunda-feira</option>
-                        <option value="1">Terça-feira</option>
-                        <option value="2">Quarta-feira</option>
-                        <option value="3">Quinta-feira</option>
-                        <option value="4">Sexta-feira</option>
+                        <option value="1">Segunda-feira</option>
+                        <option value="2">Terça-feira</option>
+                        <option value="3">Quarta-feira</option>
+                        <option value="4">Quinta-feira</option>
+                        <option value="5">Sexta-feira</option>
                       </select>
                     </div>
 
