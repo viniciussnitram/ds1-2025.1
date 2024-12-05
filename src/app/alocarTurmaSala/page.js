@@ -37,7 +37,7 @@ export default function AlocarTurmaSala() {
     tempoSala: 0,
   });
   const [salasDisponiveis, setSalasDisponiveis] = useState([]);
-  const [selectedSala, setSelectedSala] = useState([]);
+  const [selectedSala, setSelectedSala] = useState(null);
 
   useEffect(() => {
     const getData = async () => {
@@ -54,7 +54,6 @@ export default function AlocarTurmaSala() {
           necessitaLoucaDigital: turma.disciplina.necessitaLoucaDigital
         }))
         setTabela(mapResponse);
-        console.log(mapResponse);
       } catch (error) {
         console.log(error);
       }
@@ -65,8 +64,15 @@ export default function AlocarTurmaSala() {
 
   const handleAlocarTurmaSala = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/api/Turma/alocar-turma", alocarTurmaSala);
-      alert("Turma alocada com sucesso!");
+      const turma = {
+        turmaId: selectedTurma.id,
+        salaId: selectedSala.id,
+        diaSemana: parseInt(filterDia),
+        tempoSala: parseInt(filterHora),
+      }
+      console.log(turma)
+      const response = await axios.post("http://localhost:5000/api/Turma/alocar-turma", turma);
+      setDialogOpen(false)
     } catch (error) {
       console.log(error);
     }
@@ -81,7 +87,6 @@ export default function AlocarTurmaSala() {
           TempoAula: parseInt(filterHora),
         },
       });
-      console.log(response.data);
       setSalasDisponiveis((prev) => ({ ...prev, [turmaId]: response.data }));
     } catch (error) {
       console.log(error);
@@ -179,14 +184,12 @@ export default function AlocarTurmaSala() {
                     <TableCell>
                       <select
                         className="rounded-md border p-2"
-                        value={selectedSala[row.id] || ""}
+                        value={selectedSala?.id || ""}
                         onClick={() => handleBuscarSalasDisponiveis(row.id)} // Chama a função ao clicar
-                        onChange={(e) =>
-                          setSelectedSala((prev) => ({
-                            ...prev,
-                            [row.id]: e.target.value,
-                          }))
-                        }
+                        onChange={(e) => {
+                          const selected = salasDisponiveis[row.id]?.find(sala => sala.id === parseInt(e.target.value));
+                          setSelectedSala(selected);
+                        }}
                       >
                         <option value="">Selecione uma sala</option>
                         {salasDisponiveis[row.id]?.map((sala) => (
@@ -218,7 +221,7 @@ export default function AlocarTurmaSala() {
                 <DialogDescription>
                   {selectedTurma && (
                     <>
-                      <p>Tem certeza que deseja alocar a turma {selectedTurma.disciplina} do professor {selectedTurma.professor} na sala?</p>
+                      <p>Tem certeza que deseja alocar a turma {selectedTurma.disciplina} do professor {selectedTurma.professor} na sala {selectedSala.numero} bloco {selectedSala.bloco}?</p>
                     </>
                   )}
                 </DialogDescription>
