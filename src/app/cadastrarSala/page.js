@@ -22,6 +22,7 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Trash2 } from "lucide-react";
 import { Pencil } from "lucide-react";
+import { Eye } from "lucide-react";
 import axios from "axios";
 
 export default function CadastrarSala() {
@@ -37,6 +38,10 @@ export default function CadastrarSala() {
   const [indisponibilidadeOpen, setIndisponibilidadeOpen] = useState(false);
   //pega dia da semana e horario
   const [selectedDiaSemana, setSelectedDiaSemana] = useState("");
+  //visualizar indisponibilidade
+  const [indisponibilidades, setIndisponibilidades] = useState([]);
+  const [isIndisponibilidadeListOpen, setIsIndisponibilidadeListOpen] = useState(false);
+
   const [selectedBloco, setSelectedBloco] = useState("");
   const [selectedSalaId, setSelectedSalaId] = useState(0);
   const [selectedHorario, setSelectedHorario] = useState(0);
@@ -142,6 +147,20 @@ export default function CadastrarSala() {
     }
   };
 
+  //Função para Buscar Indisponibilidades
+  const fetchIndisponibilidades = async (salaId) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/Sala/${salaId}`);
+      console.log("Dados da sala recebidos:", response.data);
+  
+      // Atualiza o estado com as indisponibilidades
+      setIndisponibilidades(response.data.indisponibilidades || []);
+      setIsIndisponibilidadeListOpen(true); // Abre o modal
+    } catch (error) {
+      console.error("Erro ao buscar os dados da sala:", error);
+    }
+  };
+  
   return (
     <main className="w-full min-h-screen">
       <div className="w-full flex font-bold text-4xl justify-center mt-4 mb-8">
@@ -407,11 +426,19 @@ export default function CadastrarSala() {
                       {row.possuiLoucaDigital ? "Sim" : "Não"}
                     </TableCell>
                     <TableCell>
-                      <button className="mr-2">
+                      {/* Botão de Editar */}
+                      <button className="mr-2 text-blue-500 hover:text-blue-700">
                         <Pencil onClick={() => handleEditSala(row)} />
                       </button>
-                      <button onClick={() => handleOpenDeleteDialog(row)}>
+
+                      {/* Botão de Excluir */}
+                      <button className="mr-2 text-red-500 hover:text-red-700" onClick={() => handleOpenDeleteDialog(row)}>
                         <Trash2 />
+                      </button>
+
+                      {/* Botão de Visualizar */}
+                      <button className="mr-2 text-green-500 hover:text-green-700" onClick={() => fetchIndisponibilidades(row.id)}>
+                        <Eye />
                       </button>
                     </TableCell>
                   </TableRow>
@@ -492,6 +519,33 @@ export default function CadastrarSala() {
               Cancelar
             </Button>
             <Button onClick={handleUpdateSala}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/*Modal para Exibir Indisponibilidades*/}
+      <Dialog open={isIndisponibilidadeListOpen} onOpenChange={setIsIndisponibilidadeListOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Indisponibilidades</DialogTitle>
+          </DialogHeader>
+          <div>
+            {indisponibilidades.length > 0 ? (
+              <ul>
+                {indisponibilidades.map((indisponibilidade) => (
+                  <li key={indisponibilidade.id}>
+                    Dia da Semana: {indisponibilidade.diaSemana}, Tempo: {indisponibilidade.tempo}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Nenhuma indisponibilidade encontrada.</p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsIndisponibilidadeListOpen(false)}>
+              Fechar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
