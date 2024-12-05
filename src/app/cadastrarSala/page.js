@@ -35,6 +35,8 @@ export default function CadastrarSala() {
   const [lousa, setLousa] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [indisponibilidadeOpen, setIndisponibilidadeOpen] = useState(false);
+  //pega dia da semana e horario
+  const [selectedDiaSemana, setSelectedDiaSemana] = useState("");
   const [selectedBloco, setSelectedBloco] = useState("");
   const [selectedSalaId, setSelectedSalaId] = useState(0);
   const [selectedHorario, setSelectedHorario] = useState(0);
@@ -88,7 +90,7 @@ export default function CadastrarSala() {
     try {
       const indisponibilidade = {
         salaId: parseInt(selectedSalaId),
-        diaSemana: 1,
+        diaSemana: parseInt(selectedSalaId),
         tempo: parseInt(selectedHorario),
       };
 
@@ -314,6 +316,24 @@ export default function CadastrarSala() {
                               {row.numero}
                             </option>
                           ))}
+                      </select>
+                    </div>
+
+                    {/* Seleção do Dia da Semana */}
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="diaSemana" className="text-right">Dia da Semana</Label>
+                      <select
+                        id="diaSemana"
+                        className="rounded-md border p-2 col-span-3"
+                        value={selectedDiaSemana}
+                        onChange={(e) => setSelectedDiaSemana(e.target.value)}
+                      >
+                        <option value="">Selecione um dia</option>
+                        <option value="0">Segunda-feira</option>
+                        <option value="1">Terça-feira</option>
+                        <option value="2">Quarta-feira</option>
+                        <option value="3">Quinta-feira</option>
+                        <option value="4">Sexta-feira</option>
                       </select>
                     </div>
 
