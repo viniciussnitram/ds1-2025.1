@@ -67,8 +67,8 @@ export default function Home() {
 
       const formData = new FormData();
       formData.append("file", selectedFile);
-
-      console.log("Enviando arquivo:", selectedFile);
+      const response = await axios.post("http://localhost:5000/api/Turma/importar-excel-turmas", formData);
+      console.log(response.data);
       setTabelaOriginal([]);
       setTabela([]);
       setDialogOpen(false);
