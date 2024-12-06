@@ -60,7 +60,24 @@ export default function AlocarTurmaSala() {
     const getTurmasData = async () => {
       try {
         const response = await axios.get("http://localhost:5000/api/Turma");
-        const mapResponse = response.data.map((turma) => ({
+        const turmas = response.data;
+    
+        // Buscar alocações para cada turma
+        const turmasComAlocacoes = await Promise.all(
+          turmas.map(async (turma) => {
+            const alocacoesResponse = await axios.get(`http://localhost:5000/api/Turma/${turma.id}`);
+            const alocacoes = alocacoesResponse.data.alocacoes || [];
+            const alocacaoAtual = alocacoes[0]; // Considera a primeira alocação, se existir
+    
+            return {
+              ...turma,
+              alocada: !!alocacaoAtual,
+              salaSelecionada: alocacaoAtual ? alocacaoAtual.salaId : null,
+            };
+          })
+        );
+    
+        const mapResponse = turmasComAlocacoes.map((turma) => ({
           id: turma.id,
           professor: turma.professor,
           disciplina: turma.disciplina.nome,
@@ -69,14 +86,16 @@ export default function AlocarTurmaSala() {
           necessitaLaboratorio: turma.disciplina.necessitaLaboratorio,
           necessitaArCondicionado: turma.disciplina.necessitaArCondicionado,
           necessitaLoucaDigital: turma.disciplina.necessitaLoucaDigital,
-          disciplinaId: turma.disciplina.id, // Inclua o ID da disciplina aqui
-          alocacoes: "",
-        }))
+          disciplinaId: turma.disciplina.id,
+          alocada: turma.alocada,
+          salaSelecionada: turma.salaSelecionada,
+        }));
+    
         setTabela(mapResponse);
       } catch (error) {
-        console.log(error);
+        console.error("Erro ao carregar turmas:", error);
       }
-    };
+    };       
 
     const getSalasData = async () => {
       try {
@@ -108,20 +127,83 @@ export default function AlocarTurmaSala() {
     }
   }
 
-  const handleBuscarSalasDisponiveis = async (turmaId) => {
+  //Busca salas disponíveis para determinada disciplina
+  const handleBuscarSalasDisponiveis = async (turma) => {
     try {
+      // Mapear Código Horário para DiaSemana e TempoAula
+      const horarioMapping = {
+        1: { diaSemana: 1, tempoAula: 1 },
+        2: { diaSemana: 1, tempoAula: 3 },
+        3: { diaSemana: 2, tempoAula: 3 },
+        4: { diaSemana: 3, tempoAula: 1 },
+        5: { diaSemana: 4, tempoAula: 1 },
+        6: { diaSemana: 4, tempoAula: 3 },
+      };
+  
+      const horario = horarioMapping[turma.codigoHorario];
+      if (!horario) {
+        alert("Horário inválido para a turma.");
+        return;
+      }
+  
       const response = await axios.get("http://localhost:5000/api/Turma/obter-salas-disponiveis", {
         params: {
-          TurmaId: turmaId,
-          DiaSemana: parseInt(filterDia),
-          TempoAula: parseInt(filterHora),
+          TurmaId: turma.id,
+          DiaSemana: horario.diaSemana,
+          TempoAula: horario.tempoAula,
         },
       });
-      setSalasDisponiveis((prev) => ({ ...prev, [turmaId]: response.data }));
+  
+      // Atualize as salas disponíveis no estado
+      setSalasDisponiveis((prev) => ({
+        ...prev,
+        [turma.id]: response.data,
+      }));
     } catch (error) {
-      console.log(error);
+      console.error("Erro ao buscar salas disponíveis:", error);
+      alert("Erro ao buscar salas disponíveis.");
     }
-  }
+  };
+
+  //salva a alocação de sala disponivel da disciplina
+  const handleSalvarAlocacao = async (turma) => {
+    try {
+      if (!selectedSala) {
+        alert("Por favor, selecione uma sala.");
+        return;
+      }
+  
+      // Mapear Código Horário para DiaSemana e TempoAula
+      const horarioMapping = {
+        1: { diaSemana: 1, tempoAula: 1 },
+        2: { diaSemana: 1, tempoAula: 3 },
+        3: { diaSemana: 2, tempoAula: 3 },
+        4: { diaSemana: 3, tempoAula: 1 },
+        5: { diaSemana: 4, tempoAula: 1 },
+        6: { diaSemana: 4, tempoAula: 3 },
+      };
+  
+      const horario = horarioMapping[turma.codigoHorario];
+      if (!horario) {
+        alert("Horário inválido para a turma.");
+        return;
+      }
+  
+      const payload = {
+        turmaId: turma.id,
+        salaId: selectedSala.id,
+        diaSemana: horario.diaSemana,
+        tempoSala: horario.tempoAula,
+      };
+  
+      await axios.post("http://localhost:5000/api/Turma/alocar-turma", payload);
+      alert("Alocação salva com sucesso!");
+      await getTurmasData(); // Atualizar tabela
+    } catch (error) {
+      console.error("Erro ao salvar alocação:", error);
+      alert("Erro ao salvar alocação.");
+    }
+  };
 
   const handleAlocacoesTurma = async (id) => {
     try {
@@ -298,6 +380,9 @@ export default function AlocarTurmaSala() {
     getSalasData();
   }, []);
 
+  //Listar e alocar sala na disciplina
+  
+
   return (
     <main className="min-h-screen mb-20">
       <div className="w-full flex font-bold text-4xl justify-center mt-4 mb-8">
@@ -389,24 +474,28 @@ export default function AlocarTurmaSala() {
                       <TableCell>{row.necessitaLoucaDigital ? "Sim" : "Não"}</TableCell>
                       <TableCell>{row.necessitaArCondicionado ? "Sim" : "Não"}</TableCell>
                       <TableCell>
-                        <select
-                          className="rounded-md border p-2"
-                          value={selectedSala?.id || ""}
-                          onClick={() => handleBuscarSalasDisponiveis(row.id)}
-                          onChange={(e) => {
-                            const selected = salasDisponiveis[row.id]?.find(
-                              (sala) => sala.id === parseInt(e.target.value)
-                            );
-                            setSelectedSala(selected);
-                          }}
-                        >
-                          <option value="">Selecione uma sala</option>
-                          {salasDisponiveis[row.id]?.map((sala) => (
-                            <option key={sala.id} value={sala.id}>
-                              Sala: Bloco {sala.bloco} - Número {sala.numero}
-                            </option>
-                          ))}
-                        </select>
+                        {row.alocada ? (
+                          <span className="text-green-500 font-bold">Alocado</span>
+                        ) : (
+                          <select
+                            className="rounded-md border p-2"
+                            value={selectedSala?.id || ""}
+                            onClick={() => handleBuscarSalasDisponiveis(row)} // Busca salas ao clicar
+                            onChange={(e) => {
+                              const selected = salasDisponiveis[row.id]?.find(
+                                (sala) => sala.id === parseInt(e.target.value)
+                              );
+                              setSelectedSala(selected);
+                            }}
+                          >
+                            <option value="">Selecione uma sala</option>
+                            {salasDisponiveis[row.id]?.map((sala) => (
+                              <option key={sala.id} value={sala.id}>
+                                Sala: Bloco {sala.bloco} - Número {sala.numero}
+                              </option>
+                            ))}
+                          </select>
+                        )}
                       </TableCell>
                       <TableCell>
                         <button
@@ -426,14 +515,21 @@ export default function AlocarTurmaSala() {
                         </button>
                       </TableCell>
                       <TableCell>
-                        <Button
-                          onClick={() => {
-                            setSelectedTurma(row);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          Salvar
-                        </Button>
+                        {row.alocada ? (
+                          <button
+                            className="rounded-md bg-gray-400 text-white p-2 cursor-not-allowed"
+                            disabled
+                          >
+                            Alocado
+                          </button>
+                        ) : (
+                          <button
+                            className="rounded-md bg-blue-600 text-white p-2"
+                            onClick={() => handleSalvarAlocacao(row)} // Salvar alocação
+                          >
+                            Salvar
+                          </button>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
