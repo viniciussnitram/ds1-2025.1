@@ -41,9 +41,12 @@ export default function AlocarTurmaSala() {
   });
   const [salasDisponiveis, setSalasDisponiveis] = useState([]);
   const [selectedSala, setSelectedSala] = useState(null);
+  const [salas, setSalas] = useState([]);
+  const [diaPDF, setDiaPDF] = useState(0);
+  const [dialog3, setDialog3] = useState(false);
 
   useEffect(() => {
-    const getData = async () => {
+    const getTurmasData = async () => {
       try {
         const response = await axios.get("http://localhost:5000/api/Turma");
         const mapResponse = response.data.map((turma) => ({
@@ -63,7 +66,18 @@ export default function AlocarTurmaSala() {
       }
     };
 
-    getData();
+    const getSalasData = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/Sala");
+        setSalas(response.data);
+        console.log(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    getSalasData();
+    getTurmasData();
   }, []);
 
   const handleAlocarTurmaSala = async () => {
@@ -99,10 +113,65 @@ export default function AlocarTurmaSala() {
 
   const handleAlocacoesTurma = async (id) => {
     try {
-      const response = await axios.get("http://localhost:5000/api/Turma/", id);
-      setAlocacoes(response.data);
-      console.log(response.data);
-      setDialogOpen2(false);
+      const response = await axios.get(`http://localhost:5000/api/Turma/${id}`);
+
+      const alocacoes = response.data.alocacoes || [];
+
+      const diasDaSemana = [
+        "Domingo",        // 0
+        "Segunda-feira",  // 1
+        "Terça-feira",    // 2
+        "Quarta-feira",   // 3
+        "Quinta-feira",   // 4
+        "Sexta-feira",    // 5
+        "Sábado"          // 6
+      ];
+
+      // Mapeie as alocações substituindo `salaId` por `salaNome` e `tempo` por `diaSemana`
+      const alocacoesComSalaENomeDia = alocacoes.map(alocacao => {
+        const salaEncontrada = salas.find(sala => sala.id === alocacao.salaId);
+
+        // Mapeie tempo para o nome do dia da semana
+        const diaSemana = diasDaSemana[alocacao.tempo] || "Dia inválido";
+
+        return {
+          ...alocacao,
+          salaId: salaEncontrada
+            ? `${salaEncontrada.bloco}-${salaEncontrada.numero}`
+            : "Sala não encontrada",
+          diaSemana, // Substituindo tempo por dia da semana
+        };
+      });
+
+      // Atualize o estado com as alocações ajustadas
+      setAlocacoes(alocacoesComSalaENomeDia);
+      console.log("Alocações com sala e dia da semana: ", alocacoesComSalaENomeDia);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const handleGerarRelatorioFinal = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/Sala/relatorio/${diaPDF}`, {
+        responseType: 'blob'
+      })
+      // Criar um link temporário para fazer o download do arquivo
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+
+      // Definir o nome do arquivo a ser baixado
+      const contentDisposition = response.headers['content-disposition'];
+      const fileName = contentDisposition
+        ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+        : 'relatorio.pdf'; // Se não houver nome no cabeçalho, usa um nome padrão
+
+      link.download = fileName;  // Define o nome do arquivo
+
+      // Simula o clique no link para iniciar o download
+      link.click();
+
     } catch (error) {
       console.log(error);
     }
@@ -134,13 +203,12 @@ export default function AlocarTurmaSala() {
               value={filterDia}
               onChange={(e) => setFilterDia(e.target.value)}
             >
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
+              <option value="">Escolha uma opçao</option>
+              <option value="1">Segunda-Feira</option>
+              <option value="2">Terça-Feira</option>
+              <option value="3">Quarta-Feira</option>
+              <option value="4">Quinta-Feira</option>
+              <option value="5">Sexta-Feira</option>
             </select>
           </div>
 
@@ -159,6 +227,12 @@ export default function AlocarTurmaSala() {
               <option value="2">2</option>
               <option value="3">3</option>
             </select>
+          </div>
+          <button className="rounded-md bg-blue-600 text-white p-2" onClick={() => setDialog3(true)}>
+            Gerar Relatório Final
+          </button>
+          <div>
+
           </div>
         </div>
 
@@ -239,7 +313,7 @@ export default function AlocarTurmaSala() {
 
         <div className="">
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogContent>
+            <DialogContent asChild>
               <DialogHeader>
                 <DialogTitle>Alocar Turma</DialogTitle>
                 <DialogDescription>
@@ -268,16 +342,58 @@ export default function AlocarTurmaSala() {
               <DialogHeader>
                 <DialogTitle>Alocaçoes</DialogTitle>
                 <DialogDescription>
-                  {alocacoes && (
-                    <>
-
-                    </>
+                  {alocacoes && alocacoes.length > 0 ? (
+                    alocacoes.map((alocacao, index) => (
+                      <p key={index}>
+                        Dia da Semana: {alocacao.diaSemana}, Tempo: {alocacao.tempo},
+                        Sala: {alocacao.salaId}, Turma ID: {alocacao.turmaId}
+                      </p>
+                    ))
+                  ) : (
+                    <p>Nenhuma alocação encontrada.</p>
                   )}
                 </DialogDescription>
               </DialogHeader>
 
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setDialogOpen2(false)}>Fechar</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={dialog3} onOpenChange={setDialog3}>
+            <DialogContent className="max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Baixar PDF</DialogTitle>
+              </DialogHeader>
+
+              <DialogDescription>
+                <div className="overflow-x-auto">
+                  <Label htmlFor="dia" className="text-right">
+                    Dia da Semana:
+                  </Label>
+                  <select
+                    className="rounded-md border p-2 col-span-3"
+                    value={diaPDF}
+                    onChange={(e) => setDiaPDF(e.target.value)}
+                  >
+                    <option value="">Escolha uma opçao</option>
+                    <option value="1">Segunda-Feira</option>
+                    <option value="2">Terça-Feira</option>
+                    <option value="3">Quarta-Feira</option>
+                    <option value="4">Quinta-Feira</option>
+                    <option value="5">Sexta-Feira</option>
+                  </select>
+                </div>
+              </DialogDescription>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDialog3(false)}>
+                  Fechar
+                </Button>
+                <Button variant="outline" onClick={() => handleGerarRelatorioFinal()}>
+                  Baixar PDF
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
