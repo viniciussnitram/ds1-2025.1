@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Eye } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 export default function AlocarTurmaSala() {
   const [tabela, setTabela] = useState([]);
@@ -44,6 +45,16 @@ export default function AlocarTurmaSala() {
   const [salas, setSalas] = useState([]);
   const [diaPDF, setDiaPDF] = useState(0);
   const [dialog3, setDialog3] = useState(false);
+  //Editar preferencias Disciplina
+  const [dialogEditOpen, setDialogEditOpen] = useState(false);
+  const [disciplinaEdit, setDisciplinaEdit] = useState(null);
+  const [editedPreferences, setEditedPreferences] = useState({
+    necessitaLaboratorio: false,
+    necessitaArCondicionado: false,
+    necessitaLoucaDigital: false,
+  });
+  const [selectedDisciplina, setSelectedDisciplina] = useState(null);
+
 
   useEffect(() => {
     const getTurmasData = async () => {
@@ -58,6 +69,7 @@ export default function AlocarTurmaSala() {
           necessitaLaboratorio: turma.disciplina.necessitaLaboratorio,
           necessitaArCondicionado: turma.disciplina.necessitaArCondicionado,
           necessitaLoucaDigital: turma.disciplina.necessitaLoucaDigital,
+          disciplinaId: turma.disciplina.id, // Inclua o ID da disciplina aqui
           alocacoes: "",
         }))
         setTabela(mapResponse);
@@ -206,7 +218,85 @@ export default function AlocarTurmaSala() {
     return matchesText && matchesDay && matchesTime;
   });
   
+  //Função para abrir o diálogo de edição
+  const handleEditPreferences = async (turma) => {
+    try {
+      const disciplinaId = turma.disciplinaId; // Certifique-se de que este é o campo correto
+      if (!disciplinaId) {
+        throw new Error("ID da disciplina não encontrado.");
+      }
+      const response = await axios.get(`http://localhost:5000/api/Disciplina/${disciplinaId}`);
+      setSelectedDisciplina(response.data); // Define a disciplina selecionada no estado
+      setDialogEditOpen(true); // Abre o modal para edição
+    } catch (error) {
+      console.error("Erro ao buscar detalhes da disciplina:", error);
+      alert("Erro ao buscar detalhes da disciplina.");
+    }
+  };     
   
+  //Função para salvar as edições
+  const handleSavePreferences = async () => {
+    try {
+      if (!selectedDisciplina) {
+        throw new Error("Nenhuma disciplina selecionada.");
+      }
+  
+      const payload = {
+        id: selectedDisciplina.id,
+        necessitaLaboratorio: selectedDisciplina.necessitaLaboratorio,
+        necessitaLoucaDigital: selectedDisciplina.necessitaLoucaDigital,
+        necessitaArCondicionado: selectedDisciplina.necessitaArCondicionado,
+      };
+  
+      console.log("Payload enviado para API:", payload); // Para depuração
+  
+      await axios.put(`http://localhost:5000/api/Disciplina/${selectedDisciplina.id}`, payload);
+      alert("Alterações salvas com sucesso!");
+      
+      setDialogEditOpen(false); // Fecha o modal
+      await getTurmasData(); // Atualiza a tabela com os dados atualizados
+    } catch (error) {
+      alert("Erro ao salvar as alterações.");
+      console.error("Erro ao salvar as alterações:", error);
+    }
+  };    
+
+  //atualiza a tela quando mudada preferencias da disciplina
+  const getTurmasData = async () => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/Turma");
+      const mapResponse = response.data.map((turma) => ({
+        id: turma.id,
+        professor: turma.professor,
+        disciplina: turma.disciplina.nome,
+        quantidadeAlunos: turma.quantidadeAlunos,
+        codigoHorario: turma.codigoHorario,
+        necessitaLaboratorio: turma.disciplina.necessitaLaboratorio,
+        necessitaArCondicionado: turma.disciplina.necessitaArCondicionado,
+        necessitaLoucaDigital: turma.disciplina.necessitaLoucaDigital,
+        disciplinaId: turma.disciplina.id,
+        alocacoes: "",
+      }));
+      setTabela(mapResponse);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  // Chame getTurmasData no useEffect apenas uma vez
+  useEffect(() => {
+    getTurmasData();
+    const getSalasData = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/Sala");
+        setSalas(response.data);
+        console.log(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    getSalasData();
+  }, []);
 
   return (
     <main className="min-h-screen mb-20">
@@ -296,8 +386,8 @@ export default function AlocarTurmaSala() {
                       <TableCell>{row.quantidadeAlunos}</TableCell>
                       <TableCell>{row.codigoHorario}</TableCell>
                       <TableCell>{row.necessitaLaboratorio ? "Sim" : "Não"}</TableCell>
-                      <TableCell>{row.necessitaArCondicionado ? "Sim" : "Não"}</TableCell>
                       <TableCell>{row.necessitaLoucaDigital ? "Sim" : "Não"}</TableCell>
+                      <TableCell>{row.necessitaArCondicionado ? "Sim" : "Não"}</TableCell>
                       <TableCell>
                         <select
                           className="rounded-md border p-2"
@@ -319,6 +409,12 @@ export default function AlocarTurmaSala() {
                         </select>
                       </TableCell>
                       <TableCell>
+                        <button
+                          className="mr-2 text-blue-500 hover:text-blue-700"
+                          onClick={() => handleEditPreferences(row)}
+                        >
+                          <Pencil />
+                        </button>
                         <button
                           className="mr-2 text-green-500 hover:text-green-700"
                           onClick={() => {
@@ -432,6 +528,62 @@ export default function AlocarTurmaSala() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          <Dialog open={dialogEditOpen} onOpenChange={setDialogEditOpen}>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle className="text-xl">Editar Preferências da Disciplina</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="lab" className="text-right">Laboratório:</Label>
+                  <Input
+                    id="lab"
+                    type="checkbox"
+                    checked={selectedDisciplina?.necessitaLaboratorio || false}
+                    onChange={(e) =>
+                      setSelectedDisciplina({
+                        ...selectedDisciplina,
+                        necessitaLaboratorio: e.target.checked,
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="lousa" className="text-right">Lousa Digital:</Label>
+                  <Input
+                    id="lousa"
+                    type="checkbox"
+                    checked={selectedDisciplina?.necessitaLoucaDigital || false}
+                    onChange={(e) =>
+                      setSelectedDisciplina({
+                        ...selectedDisciplina,
+                        necessitaLoucaDigital: e.target.checked,
+                      })
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="ar" className="text-right">Ar Condicionado:</Label>
+                  <Input
+                    id="ar"
+                    type="checkbox"
+                    checked={selectedDisciplina?.necessitaArCondicionado || false}
+                    onChange={(e) =>
+                      setSelectedDisciplina({
+                        ...selectedDisciplina,
+                        necessitaArCondicionado: e.target.checked,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDialogEditOpen(false)}>Cancelar</Button>
+                <Button onClick={handleSavePreferences}>Salvar</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
         </div>
       </div>
     </main>
