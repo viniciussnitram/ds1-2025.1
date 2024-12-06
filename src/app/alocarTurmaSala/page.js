@@ -287,58 +287,60 @@ export default function AlocarTurmaSala() {
               </TableRow>
             </TableHeader>
               <TableBody>
-                {filteredTable.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell>{row.disciplina}</TableCell>
-                    <TableCell>{row.professor}</TableCell>
-                    <TableCell>{row.quantidadeAlunos}</TableCell>
-                    <TableCell>{row.codigoHorario}</TableCell>
-                    <TableCell>{row.necessitaLaboratorio ? "Sim" : "Não"}</TableCell>
-                    <TableCell>{row.necessitaArCondicionado ? "Sim" : "Não"}</TableCell>
-                    <TableCell>{row.necessitaLoucaDigital ? "Sim" : "Não"}</TableCell>
-                    <TableCell>
-                      <select
-                        className="rounded-md border p-2"
-                        value={selectedSala?.id || ""}
-                        onClick={() => handleBuscarSalasDisponiveis(row.id)}
-                        onChange={(e) => {
-                          const selected = salasDisponiveis[row.id]?.find(
-                            (sala) => sala.id === parseInt(e.target.value)
-                          );
-                          setSelectedSala(selected);
-                        }}
-                      >
-                        <option value="">Selecione uma sala</option>
-                        {salasDisponiveis[row.id]?.map((sala) => (
-                          <option key={sala.id} value={sala.id}>
-                            Sala: Bloco {sala.bloco} - Número {sala.numero}
-                          </option>
-                        ))}
-                      </select>
-                    </TableCell>
-                    <TableCell>
-                      <button
-                        className="mr-2 text-green-500 hover:text-green-700"
-                        onClick={() => {
-                          handleAlocacoesTurma(row.id);
-                          setDialogOpen2(true);
-                        }}
-                      >
-                        <Eye />
-                      </button>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        onClick={() => {
-                          setSelectedTurma(row);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        Salvar
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filteredTable
+                  .sort((a, b) => b.quantidadeAlunos - a.quantidadeAlunos) // Ordena aqui diretamente
+                  .map((row) => (
+                    <TableRow key={row.id}>
+                      <TableCell>{row.disciplina}</TableCell>
+                      <TableCell>{row.professor}</TableCell>
+                      <TableCell>{row.quantidadeAlunos}</TableCell>
+                      <TableCell>{row.codigoHorario}</TableCell>
+                      <TableCell>{row.necessitaLaboratorio ? "Sim" : "Não"}</TableCell>
+                      <TableCell>{row.necessitaArCondicionado ? "Sim" : "Não"}</TableCell>
+                      <TableCell>{row.necessitaLoucaDigital ? "Sim" : "Não"}</TableCell>
+                      <TableCell>
+                        <select
+                          className="rounded-md border p-2"
+                          value={selectedSala?.id || ""}
+                          onClick={() => handleBuscarSalasDisponiveis(row.id)}
+                          onChange={(e) => {
+                            const selected = salasDisponiveis[row.id]?.find(
+                              (sala) => sala.id === parseInt(e.target.value)
+                            );
+                            setSelectedSala(selected);
+                          }}
+                        >
+                          <option value="">Selecione uma sala</option>
+                          {salasDisponiveis[row.id]?.map((sala) => (
+                            <option key={sala.id} value={sala.id}>
+                              Sala: Bloco {sala.bloco} - Número {sala.numero}
+                            </option>
+                          ))}
+                        </select>
+                      </TableCell>
+                      <TableCell>
+                        <button
+                          className="mr-2 text-green-500 hover:text-green-700"
+                          onClick={() => {
+                            handleAlocacoesTurma(row.id);
+                            setDialogOpen2(true);
+                          }}
+                        >
+                          <Eye />
+                        </button>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          onClick={() => {
+                            setSelectedTurma(row);
+                            setDialogOpen(true);
+                          }}
+                        >
+                          Salvar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
 
           </Table>
