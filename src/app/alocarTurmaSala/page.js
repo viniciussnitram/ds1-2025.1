@@ -22,6 +22,7 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Eye } from "lucide-react";
 
 export default function AlocarTurmaSala() {
   const [tabela, setTabela] = useState([]);
@@ -29,7 +30,9 @@ export default function AlocarTurmaSala() {
   const [filterHora, setFilterHora] = useState(0);
   const [filterValue, setFilterValue] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen2, setDialogOpen2] = useState(false);
   const [selectedTurma, setSelectedTurma] = useState(null);
+  const [alocacoes, setAlocacoes] = useState([]);
   const [alocarTurmaSala, setAlocarTurmaSala] = useState({
     turmaId: 0,
     salaId: 0,
@@ -89,6 +92,17 @@ export default function AlocarTurmaSala() {
         },
       });
       setSalasDisponiveis((prev) => ({ ...prev, [turmaId]: response.data }));
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const handleAlocacoesTurma = async (id) => {
+    try {
+      const response = await axios.get("http://localhost:5000/api/Turma/", id);
+      setAlocacoes(response.data);
+      console.log(response.data);
+      setDialogOpen2(false);
     } catch (error) {
       console.log(error);
     }
@@ -154,8 +168,8 @@ export default function AlocarTurmaSala() {
               <TableRow>
                 <TableHead>Disciplina</TableHead>
                 <TableHead>Professor</TableHead>
-                <TableHead>Quantidade de Alunos</TableHead>
-                <TableHead>Código Horário</TableHead>
+                <TableHead>Qtd Alunos</TableHead>
+                <TableHead>Cód. Horário</TableHead>
                 <TableHead>Laboratório</TableHead>
                 <TableHead>Lousa</TableHead>
                 <TableHead>Ar</TableHead>
@@ -201,7 +215,14 @@ export default function AlocarTurmaSala() {
                         ))}
                       </select>
                     </TableCell>
-                    <TableCell>{row.alocacoes}</TableCell>
+                    <TableCell>
+                      <button className="mr-2 text-green-500 hover:text-green-700" onClick={() => {
+                        handleAlocacoesTurma(row.id);
+                        setDialogOpen2(true);
+                      }}>
+                        <Eye />
+                      </button>
+                    </TableCell>
                     <TableCell>
                       <Button onClick={() => {
                         setSelectedTurma(row); // Define a turma selecionada
@@ -229,7 +250,6 @@ export default function AlocarTurmaSala() {
                   )}
                 </DialogDescription>
               </DialogHeader>
-
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
                 <Button type="button" onClick={() => {
@@ -239,6 +259,25 @@ export default function AlocarTurmaSala() {
                 >
                   Sim
                 </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={dialogOpen2} onOpenChange={setDialogOpen2}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Alocaçoes</DialogTitle>
+                <DialogDescription>
+                  {alocacoes && (
+                    <>
+
+                    </>
+                  )}
+                </DialogDescription>
+              </DialogHeader>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setDialogOpen2(false)}>Fechar</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

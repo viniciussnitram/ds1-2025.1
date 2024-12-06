@@ -28,6 +28,7 @@ export default function Home() {
   const [tabelaOriginal, setTabelaOriginal] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen2, setDialogOpen2] = useState(false);
 
   const handleFileUpload = (e) => {
     setTabela([]);
@@ -80,6 +81,7 @@ export default function Home() {
   const handleEncerrarPeriodo = async () => {
     try {
       const response = await axios.post("http://localhost:5000/api/Turma/limpar-semestre");
+      setDialogOpen2(false);
     } catch (error) {
       console.error(error);
     }
@@ -100,9 +102,9 @@ export default function Home() {
           />
         </div>
         <div className="mt-4">
-          <Dialog>
-            <DialogTrigger>
-              <button className="rounded-md bg-blue-600 text-white p-2">
+          <Dialog open={dialogOpen2} onOpenChange={setDialogOpen2}>
+            <DialogTrigger asChild>
+              <button className="rounded-md bg-blue-600 text-white p-2" onClick={() => setDialogOpen2(true)}>
                 Encerrar Período Letivo
               </button>
             </DialogTrigger>
