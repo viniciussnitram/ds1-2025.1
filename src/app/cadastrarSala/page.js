@@ -93,6 +93,18 @@ export default function CadastrarSala() {
     event.preventDefault();
   
     try {
+      // Verificar se já existe uma indisponibilidade com o mesmo dia e horário
+      const duplicada = indisponibilidades.some(
+        (indisponibilidade) =>
+          indisponibilidade.diaSemana === parseInt(selectedDiaSemana) &&
+          indisponibilidade.tempo === parseInt(selectedHorario)
+      );
+  
+      if (duplicada) {
+        alert("Essa indisponibilidade já está registrada para a sala selecionada.");
+        return;
+      }
+  
       const indisponibilidade = {
         salaId: parseInt(selectedSalaId),
         diaSemana: parseInt(selectedDiaSemana),
@@ -110,11 +122,13 @@ export default function CadastrarSala() {
   
       // Fecha o modal de adicionar indisponibilidade
       setIndisponibilidadeOpen(false);
+  
+      alert("Indisponibilidade adicionada com sucesso.");
     } catch (error) {
-      alert(error.response.data.errors);
+      alert("Erro ao adicionar indisponibilidade.");
       console.error("Erro ao adicionar indisponibilidade:", error);
     }
-  };  
+  };   
 
   const handleEditSala = (sala) => {
     setEditSala({ ...sala }); // Preenche o estado com os dados da sala selecionada
@@ -148,13 +162,35 @@ export default function CadastrarSala() {
 
   const handleDeleteSala = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/Sala/${selectedSalaId}`);
-      setTabela((prev) => prev.filter((s) => s.id !== selectedSalaId));
+      // 1. Buscar todas as indisponibilidades da sala
+      const response = await axios.get(`http://localhost:5000/api/Sala/${selectedSalaId}`);
+      const indisponibilidades = response.data.indisponibilidades || [];
+  
+      if (indisponibilidades.length === 0) {
+        alert("Nenhuma indisponibilidade encontrada para esta sala.");
+        setIsDialogDeleteOpen(false);
+        return;
+      }
+  
+      // 2. Deletar cada indisponibilidade individualmente
+      for (const indisponibilidade of indisponibilidades) {
+        await axios.delete(
+          `http://localhost:5000/api/Sala/${selectedSalaId}/indisponibilidade/${indisponibilidade.id}`
+        );
+      }
+  
+      // 3. Atualizar a tabela de indisponibilidades e fechar o modal
+      await fetchIndisponibilidades(selectedSalaId);
       setIsDialogDeleteOpen(false);
+  
+      alert("Todas as indisponibilidades da sala foram excluídas com sucesso.");
     } catch (error) {
-      console.error("Erro ao excluir a sala:", error);
+      console.error("Erro ao excluir indisponibilidades:", error);
+      alert("Erro ao excluir as indisponibilidades.");
     }
   };
+  
+  
 
   //Função para Buscar Indisponibilidades
   const fetchIndisponibilidades = async (salaId) => {
@@ -586,13 +622,15 @@ export default function CadastrarSala() {
         </DialogContent>
       </Dialog>
 
-
       <Dialog open={isDialogDeleteOpen} onOpenChange={setIsDialogDeleteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Excluir Sala</DialogTitle>
+            <DialogTitle>Excluir Indisponibilidades</DialogTitle>
           </DialogHeader>
-          <p>Tem certeza que deseja excluir a sala {editSala.numero} do bloco {editSala.bloco}?</p>
+          <p>
+            Tem certeza que deseja excluir <b>todas as indisponibilidades</b> da sala{" "}
+            {editSala.numero} do bloco {editSala.bloco}?
+          </p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogDeleteOpen(false)}>
               Cancelar
