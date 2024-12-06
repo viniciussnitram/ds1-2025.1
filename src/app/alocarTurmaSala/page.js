@@ -43,15 +43,16 @@ export default function AlocarTurmaSala() {
     const getData = async () => {
       try {
         const response = await axios.get("http://localhost:5000/api/Turma");
-        const mapResponse = response.data.map((turma, index) => ({
-          id: index + 1,
+        const mapResponse = response.data.map((turma) => ({
+          id: turma.id,
           professor: turma.professor,
           disciplina: turma.disciplina.nome,
           quantidadeAlunos: turma.quantidadeAlunos,
           codigoHorario: turma.codigoHorario,
           necessitaLaboratorio: turma.disciplina.necessitaLaboratorio,
           necessitaArCondicionado: turma.disciplina.necessitaArCondicionado,
-          necessitaLoucaDigital: turma.disciplina.necessitaLoucaDigital
+          necessitaLoucaDigital: turma.disciplina.necessitaLoucaDigital,
+          alocacoes: "",
         }))
         setTabela(mapResponse);
       } catch (error) {
@@ -70,9 +71,9 @@ export default function AlocarTurmaSala() {
         diaSemana: parseInt(filterDia),
         tempoSala: parseInt(filterHora),
       }
-      console.log(turma)
       const response = await axios.post("http://localhost:5000/api/Turma/alocar-turma", turma);
-      setDialogOpen(false)
+      setDialogOpen(false);
+      console.log(response.data);
     } catch (error) {
       console.log(error);
     }
@@ -159,6 +160,7 @@ export default function AlocarTurmaSala() {
                 <TableHead>Lousa</TableHead>
                 <TableHead>Ar</TableHead>
                 <TableHead>Sala Disponíveis</TableHead>
+                <TableHead>Alocaçoes</TableHead>
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -199,6 +201,7 @@ export default function AlocarTurmaSala() {
                         ))}
                       </select>
                     </TableCell>
+                    <TableCell>{row.alocacoes}</TableCell>
                     <TableCell>
                       <Button onClick={() => {
                         setSelectedTurma(row); // Define a turma selecionada
