@@ -177,6 +177,37 @@ export default function AlocarTurmaSala() {
     }
   }
 
+  //mapeamento que relaciona cada dia da semana aos códigos de horário
+  const dayToCodeMapping = {
+    1: [1, 1, 2], // Segunda
+    2: [3, 1, 2], // Terça
+    3: [4, 4, 3], // Quarta
+    4: [5, 4, 6], // Quinta
+    5: [6, 5], // Sexta
+  };  
+
+  //lógica de filtragem para considerar esse mapeamento
+  const filteredTable = tabela.filter((row) => {
+    // Lógica de filtragem de texto
+    const matchesText = Object.values(row).some((value) =>
+      value.toString().toLowerCase().includes(filterValue.toLowerCase())
+    );
+  
+    // Lógica de filtragem com base no dia
+    const matchesDay = filterDia
+      ? dayToCodeMapping[filterDia]?.includes(row.codigoHorario)
+      : true;
+  
+    // Lógica de filtragem com base no dia e horário
+    const matchesTime = filterDia && filterHora
+      ? row.codigoHorario === dayToCodeMapping[filterDia]?.[filterHora - 1]
+      : true;
+  
+    return matchesText && matchesDay && matchesTime;
+  });
+  
+  
+
   return (
     <main className="min-h-screen mb-20">
       <div className="w-full flex font-bold text-4xl justify-center mt-4 mb-8">
@@ -220,7 +251,10 @@ export default function AlocarTurmaSala() {
             <select
               className="rounded-md border p-2 col-span-3"
               value={filterHora}
-              onChange={(e) => setFilterHora(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setFilterHora(value ? parseInt(value) : 0); // Define o horário ou reseta para 0
+              }}              
             >
               <option>Selecione uma Opção</option>
               <option value="1">1</option>
@@ -252,17 +286,8 @@ export default function AlocarTurmaSala() {
                 <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {tabela
-                .filter((row) =>
-                  Object.values(row).some((value) =>
-                    value
-                      .toString()
-                      .toLowerCase()
-                      .includes(filterValue.toLowerCase())
-                  )
-                )
-                .map((row) => (
+              <TableBody>
+                {filteredTable.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell>{row.disciplina}</TableCell>
                     <TableCell>{row.professor}</TableCell>
@@ -275,9 +300,11 @@ export default function AlocarTurmaSala() {
                       <select
                         className="rounded-md border p-2"
                         value={selectedSala?.id || ""}
-                        onClick={() => handleBuscarSalasDisponiveis(row.id)} // Chama a função ao clicar
+                        onClick={() => handleBuscarSalasDisponiveis(row.id)}
                         onChange={(e) => {
-                          const selected = salasDisponiveis[row.id]?.find(sala => sala.id === parseInt(e.target.value));
+                          const selected = salasDisponiveis[row.id]?.find(
+                            (sala) => sala.id === parseInt(e.target.value)
+                          );
                           setSelectedSala(selected);
                         }}
                       >
@@ -290,24 +317,30 @@ export default function AlocarTurmaSala() {
                       </select>
                     </TableCell>
                     <TableCell>
-                      <button className="mr-2 text-green-500 hover:text-green-700" onClick={() => {
-                        handleAlocacoesTurma(row.id);
-                        setDialogOpen2(true);
-                      }}>
+                      <button
+                        className="mr-2 text-green-500 hover:text-green-700"
+                        onClick={() => {
+                          handleAlocacoesTurma(row.id);
+                          setDialogOpen2(true);
+                        }}
+                      >
                         <Eye />
                       </button>
                     </TableCell>
                     <TableCell>
-                      <Button onClick={() => {
-                        setSelectedTurma(row); // Define a turma selecionada
-                        setDialogOpen(true);   // Abre o diálogo
-                      }}>
+                      <Button
+                        onClick={() => {
+                          setSelectedTurma(row);
+                          setDialogOpen(true);
+                        }}
+                      >
                         Salvar
                       </Button>
                     </TableCell>
                   </TableRow>
                 ))}
-            </TableBody>
+              </TableBody>
+
           </Table>
         </div>
 
