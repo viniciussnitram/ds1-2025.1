@@ -120,17 +120,17 @@ export default function AlocarTurmaSala() {
     
         const mapResponse = turmasComAlocacoes.map((turma) => ({
           id: turma.id,
-          professor: turma.professor,
-          disciplina: turma.disciplina.nome,
-          quantidadeAlunos: turma.quantidadeAlunos,
-          codigoHorario: turma.codigoHorario,
-          necessitaLaboratorio: turma.disciplina.necessitaLaboratorio,
-          necessitaArCondicionado: turma.disciplina.necessitaArCondicionado,
-          necessitaLoucaDigital: turma.disciplina.necessitaLoucaDigital,
-          disciplinaId: turma.disciplina.id,
-          alocada: turma.alocada,
-          salaSelecionada: turma.salaSelecionada,
-        }));
+          professor: turma.professor || "Não informado",
+          disciplina: turma.disciplina?.nome || "Sem Nome",
+          quantidadeAlunos: turma.quantidadeAlunos || 0,
+          codigoHorario: turma.codigoHorario || 0,
+          necessitaLaboratorio: turma.disciplina?.necessitaLaboratorio || false,
+          necessitaArCondicionado: turma.disciplina?.necessitaArCondicionado || false,
+          necessitaLoucaDigital: turma.disciplina?.necessitaLoucaDigital || false,
+          disciplinaId: turma.disciplina?.id || 0,
+          alocada: turma.alocada || false,
+          salaSelecionada: turma.salaSelecionada || null,
+        }));                      
     
         setTabela(mapResponse); // Atualiza os dados da tabela
       } catch (error) {
@@ -189,7 +189,7 @@ export default function AlocarTurmaSala() {
               TempoAula: horario.tempoAula,
             },
           });
-          return response.data;
+          return response.data || [];
         })
       );
   
@@ -198,13 +198,17 @@ export default function AlocarTurmaSala() {
   
       setSalasDisponiveis((prev) => ({
         ...prev,
-        [turma.id]: salasCombinadas,
+        [turma.id]: salasCombinadas.map((sala) => ({
+          id: sala.id || 0,
+          bloco: sala.bloco || "Indefinido",
+          numero: sala.numero || "Desconhecido",
+        })),
       }));
     } catch (error) {
       console.error("Erro ao buscar salas disponíveis:", error);
       alert("Erro ao buscar salas disponíveis.");
     }
-  };
+  }; 
   
 
   //salva a alocação de sala disponivel da disciplina
@@ -232,14 +236,24 @@ export default function AlocarTurmaSala() {
         await axios.post("http://localhost:5000/api/Turma/alocar-turma", payload);
       }
   
-      //alert("Alocação salva com sucesso!");
-      window.location.reload(); // Recarrega a página após salvar
+      // Atualiza o estado local da tabela para refletir a mudança
+      const updatedTabela = tabela.map((row) => {
+        if (row.id === turma.id) {
+          return {
+            ...row,
+            alocada: true,
+            salaSelecionada: selectedSala.id,
+          };
+        }
+        return row;
+      });
+  
+      setTabela(updatedTabela);
     } catch (error) {
       console.error("Erro ao salvar alocação:", error);
       alert("Erro ao salvar alocação.");
     }
-  };
-  
+  };  
 
   const handleAlocacoesTurma = async (id) => {
     try {
@@ -365,11 +379,21 @@ export default function AlocarTurmaSala() {
       console.log("Payload enviado para API:", payload); // Para depuração
   
       await axios.put(`http://localhost:5000/api/Disciplina/${selectedDisciplina.id}`, payload);
-      //alert("Alterações salvas com sucesso!");
-      
-      setDialogEditOpen(false); // Fecha o modal
-      //await getTurmasData(); // Atualiza a tabela com os dados atualizados
-      window.location.reload();// Recarrega a página após salvar
+      // Atualiza a tabela localmente
+      const updatedTabela = tabela.map((row) => {
+        if (row.disciplinaId === selectedDisciplina.id) {
+          return {
+            ...row,
+            necessitaLaboratorio: selectedDisciplina.necessitaLaboratorio,
+            necessitaLoucaDigital: selectedDisciplina.necessitaLoucaDigital,
+            necessitaArCondicionado: selectedDisciplina.necessitaArCondicionado,
+          };
+        }
+        return row;
+});
+setTabela(updatedTabela);
+
+setDialogEditOpen(false); // Fecha o modal
     } catch (error) {
       alert("Erro ao salvar as alterações.");
       console.error("Erro ao salvar as alterações:", error);
@@ -456,11 +480,16 @@ export default function AlocarTurmaSala() {
       for (const alocacao of alocacoes) {
         await axios.delete(`http://localhost:5000/api/Turma/deletar-alocacao/${alocacao.id}`);
       }
-  
-      //alert("Alocação removida com sucesso!");
       
-      //await getTurmasData(); // Atualiza a tabela
-      window.location.reload();// Atualiza a pagina
+      // Atualiza a tabela localmente
+      const updatedTabela = tabela.map((row) => {
+        if (row.id === turmaId) {
+          return { ...row, alocada: false, salaSelecionada: null };
+        }
+        return row;
+      });
+      setTabela(updatedTabela);
+      
     } catch (error) {
       console.error("Erro ao tentar remover a alocação:", error);
       alert("Erro ao tentar remover a alocação.");
@@ -506,8 +535,13 @@ export default function AlocarTurmaSala() {
           }
         }
     
-        //alert("Todas as alocações foram removidas com sucesso!");
-        await getTurmasData(); // Atualiza a tabela
+        // Limpa as alocações na tabela local
+        const updatedTabela = tabela.map((row) => ({
+          ...row,
+          alocada: false,
+          salaSelecionada: null,
+        }));
+        setTabela(updatedTabela);
       } catch (error) {
         console.error("Erro ao deletar todas as alocações:", error);
         alert("Erro ao deletar todas as alocações.");
@@ -634,16 +668,17 @@ export default function AlocarTurmaSala() {
                 </TableHeader>
                 <TableBody>
                   {filteredTable
-                    .sort((a, b) => b.quantidadeAlunos - a.quantidadeAlunos) // Ordena aqui diretamente
+                    .sort((a, b) => b.quantidadeAlunos - a.quantidadeAlunos) // Ordenação existente
                     .map((row) => (
                       <TableRow key={row.id}>
-                        <TableCell>{row.disciplina}</TableCell>
-                        <TableCell>{row.professor}</TableCell>
-                        <TableCell>{row.quantidadeAlunos}</TableCell>
-                        <TableCell>{row.codigoHorario}</TableCell>
+                        <TableCell>{row.disciplina || "Sem Nome"}</TableCell>
+                        <TableCell>{row.professor || "Não informado"}</TableCell>
+                        <TableCell>{row.quantidadeAlunos !== undefined ? row.quantidadeAlunos : "Desconhecido"}</TableCell>
+                        <TableCell>{row.codigoHorario || "Não definido"}</TableCell>
                         <TableCell>{row.necessitaLaboratorio ? "Sim" : "Não"}</TableCell>
                         <TableCell>{row.necessitaLoucaDigital ? "Sim" : "Não"}</TableCell>
                         <TableCell>{row.necessitaArCondicionado ? "Sim" : "Não"}</TableCell>
+                        <TableCell>{typeof row.salaSelecionada === "string" ? row.salaSelecionada : "Não alocada"}</TableCell>
                         <TableCell>
                           {row.alocada ? (
                             <span className="text-green-500 font-bold">Alocado</span>
@@ -705,6 +740,7 @@ export default function AlocarTurmaSala() {
                       </TableRow>
                     ))}
                 </TableBody>
+
               </Table>
             )}
           </div>
