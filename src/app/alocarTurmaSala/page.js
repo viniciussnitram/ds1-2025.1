@@ -59,8 +59,41 @@ export default function AlocarTurmaSala() {
   const [selectedBloco, setSelectedBloco] = useState("");
   const [selectedSalaId, setSelectedSalaId] = useState(0);
   const [alocacoesSala, setAlocacoesSala] = useState([]);
+  const [isDialogDeleteAllOpen, setIsDialogDeleteAllOpen] = useState(false);
+  const [isDialogAllocateOpen, setIsDialogAllocateOpen] = useState(false);
+
+
   //Atualiza tabela
   const [loading, setLoading] = useState(false);
+  // Mapeamento de horários compartilhado
+  const horarioMapping = {
+    1: [
+      { diaSemana: 1, tempoAula: 1 },
+     // { diaSemana: 1, tempoAula: 2 },
+      { diaSemana: 2, tempoAula: 2 },
+    ],
+    2: [
+      { diaSemana: 1, tempoAula: 2 },//mudar tempo de aula de 2 para 3 quando ajeitado o banco
+      { diaSemana: 2, tempoAula: 1 },
+    ],
+    3: [
+      { diaSemana: 2, tempoAula: 3 },
+      { diaSemana: 3, tempoAula: 3 },
+    ],
+    4: [
+      { diaSemana: 3, tempoAula: 1 },
+      //{ diaSemana: 3, tempoAula: 2 },
+      { diaSemana: 4, tempoAula: 2 },
+    ],
+    5: [
+      { diaSemana: 4, tempoAula: 1 },
+      { diaSemana: 5, tempoAula: 2 },
+    ],
+    6: [
+      { diaSemana: 4, tempoAula: 3 },
+      { diaSemana: 5, tempoAula: 1 },
+    ],
+  };
 
 
   useEffect(() => {
@@ -141,40 +174,38 @@ export default function AlocarTurmaSala() {
   //Busca salas disponíveis para determinada disciplina
   const handleBuscarSalasDisponiveis = async (turma) => {
     try {
-      // Mapear Código Horário para DiaSemana e TempoAula
-      const horarioMapping = {
-        1: { diaSemana: 1, tempoAula: 1 },
-        2: { diaSemana: 1, tempoAula: 2 }, //alterar de 2 para 3 quando ajeitar o backend
-        3: { diaSemana: 2, tempoAula: 3 },
-        4: { diaSemana: 3, tempoAula: 1 },
-        5: { diaSemana: 4, tempoAula: 1 },
-        6: { diaSemana: 4, tempoAula: 3 },
-      };
-  
-      const horario = horarioMapping[turma.codigoHorario];
-      if (!horario) {
+      const horarios = horarioMapping[turma.codigoHorario];
+      if (!horarios) {
         alert("Horário inválido para a turma.");
         return;
       }
   
-      const response = await axios.get("http://localhost:5000/api/Turma/obter-salas-disponiveis", {
-        params: {
-          TurmaId: turma.id,
-          DiaSemana: horario.diaSemana,
-          TempoAula: horario.tempoAula,
-        },
-      });
+      const salasDisponiveisPorHorario = await Promise.all(
+        horarios.map(async (horario) => {
+          const response = await axios.get("http://localhost:5000/api/Turma/obter-salas-disponiveis", {
+            params: {
+              TurmaId: turma.id,
+              DiaSemana: horario.diaSemana,
+              TempoAula: horario.tempoAula,
+            },
+          });
+          return response.data;
+        })
+      );
   
-      // Atualize as salas disponíveis no estado
+      // Combina todas as salas disponíveis
+      const salasCombinadas = salasDisponiveisPorHorario.flat();
+  
       setSalasDisponiveis((prev) => ({
         ...prev,
-        [turma.id]: response.data,
+        [turma.id]: salasCombinadas,
       }));
     } catch (error) {
       console.error("Erro ao buscar salas disponíveis:", error);
       alert("Erro ao buscar salas disponíveis.");
     }
   };
+  
 
   //salva a alocação de sala disponivel da disciplina
   const handleSalvarAlocacao = async (turma) => {
@@ -184,38 +215,31 @@ export default function AlocarTurmaSala() {
         return;
       }
   
-      const horarioMapping = {
-        1: { diaSemana: 1, tempoAula: 1 },
-        2: { diaSemana: 1, tempoAula: 3 },
-        3: { diaSemana: 2, tempoAula: 3 },
-        4: { diaSemana: 3, tempoAula: 1 },
-        5: { diaSemana: 4, tempoAula: 1 },
-        6: { diaSemana: 4, tempoAula: 3 },
-      };
-  
-      const horario = horarioMapping[turma.codigoHorario];
-      if (!horario) {
+      const horarios = horarioMapping[turma.codigoHorario];
+      if (!horarios) {
         alert("Horário inválido para a turma.");
         return;
       }
   
-      const payload = {
-        turmaId: turma.id,
-        salaId: selectedSala.id,
-        diaSemana: horario.diaSemana,
-        tempoSala: horario.tempoAula,
-      };
+      for (const horario of horarios) {
+        const payload = {
+          turmaId: turma.id,
+          salaId: selectedSala.id,
+          diaSemana: horario.diaSemana,
+          tempoSala: horario.tempoAula,
+        };
   
-      await axios.post("http://localhost:5000/api/Turma/alocar-turma", payload);
-      alert("Alocação salva com sucesso!");
-      
-      //await getTurmasData(); // Atualiza a tabela
-      window.location.reload();// Recarrega a página após salvar
+        await axios.post("http://localhost:5000/api/Turma/alocar-turma", payload);
+      }
+  
+      //alert("Alocação salva com sucesso!");
+      window.location.reload(); // Recarrega a página após salvar
     } catch (error) {
       console.error("Erro ao salvar alocação:", error);
       alert("Erro ao salvar alocação.");
     }
-  };  
+  };
+  
 
   const handleAlocacoesTurma = async (id) => {
     try {
@@ -341,7 +365,7 @@ export default function AlocarTurmaSala() {
       console.log("Payload enviado para API:", payload); // Para depuração
   
       await axios.put(`http://localhost:5000/api/Disciplina/${selectedDisciplina.id}`, payload);
-      alert("Alterações salvas com sucesso!");
+      //alert("Alterações salvas com sucesso!");
       
       setDialogEditOpen(false); // Fecha o modal
       //await getTurmasData(); // Atualiza a tabela com os dados atualizados
@@ -433,7 +457,7 @@ export default function AlocarTurmaSala() {
         await axios.delete(`http://localhost:5000/api/Turma/deletar-alocacao/${alocacao.id}`);
       }
   
-      alert("Alocação removida com sucesso!");
+      //alert("Alocação removida com sucesso!");
       
       //await getTurmasData(); // Atualiza a tabela
       window.location.reload();// Atualiza a pagina
@@ -447,7 +471,7 @@ export default function AlocarTurmaSala() {
       try {
         setLoading(true); // Exibe o estado de carregamento
         const response = await axios.post("http://localhost:5000/api/Turma/alocar-turmas-automaticamente");
-        alert("Alocação automática realizada com sucesso!");
+        //alert("Alocação automática realizada com sucesso!");
         //await getTurmasData(); // Atualiza a tabela
         window.location.reload();// Recarrega a página após salvar
       } catch (error) {
@@ -455,6 +479,7 @@ export default function AlocarTurmaSala() {
         alert("Erro ao alocar turmas automaticamente.");
       } finally {
         setLoading(false); // Remove o estado de carregamento
+        setIsDialogAllocateOpen(false); // Fecha o diálogo
       }
     }; 
     //Função para deletar todas as alocações
@@ -481,13 +506,14 @@ export default function AlocarTurmaSala() {
           }
         }
     
-        alert("Todas as alocações foram removidas com sucesso!");
+        //alert("Todas as alocações foram removidas com sucesso!");
         await getTurmasData(); // Atualiza a tabela
       } catch (error) {
         console.error("Erro ao deletar todas as alocações:", error);
         alert("Erro ao deletar todas as alocações.");
       } finally {
         setLoading(false); // Remove o estado de carregamento
+        setIsDialogDeleteAllOpen(false); // Fecha o diálogo após a exclusão
       }
     };        
 
@@ -553,36 +579,37 @@ export default function AlocarTurmaSala() {
               <div className="flex items-center gap-2">
                 {/* Botão para abrir alocações */}
                 <button
-                  className="rounded-md bg-blue-600 text-white p-2"
+                  className="rounded-md bg-blue-600 text-white p-2 min-w-[200px] h-[60px] text-center"
                   onClick={() => setDialogAlocacoes(true)}
                 >
                   Alocações
                 </button>
-                
+
                 {/* Botão para gerar relatório */}
                 <button
-                  className="rounded-md bg-blue-600 text-white p-2"
+                  className="rounded-md bg-blue-600 text-white p-2 min-w-[200px] h-[60px] text-center"
                   onClick={() => setDialog3(true)}
                 >
                   Gerar Relatório Final
                 </button>
-                
+
                 {/* Botão para alocar turmas automaticamente */}
                 <button
-                  className="rounded-md bg-green-600 text-white p-2"
-                  onClick={handleAlocarAutomaticamente}
+                  className="rounded-md bg-green-600 text-white p-2 min-w-[200px] h-[60px] text-center"
+                  onClick={() => setIsDialogAllocateOpen(true)}
                 >
                   Alocar Automaticamente
                 </button>
-                
+
                 {/* Botão para deletar todas as alocações */}
                 <button
-                  className="rounded-md bg-red-600 text-white p-2"
-                  onClick={handleDeletarTodasAlocacoes}
+                  className="rounded-md bg-red-600 text-white p-2 min-w-[200px] h-[60px] text-center"
+                  onClick={() => setIsDialogDeleteAllOpen(true)}
                 >
-                  Limpar Todas Alocações
+                  Eliminar Todas As Alocações
                 </button>
               </div>
+
 
             </div>
           </div>
@@ -939,6 +966,43 @@ export default function AlocarTurmaSala() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
+              <Dialog open={isDialogDeleteAllOpen} onOpenChange={setIsDialogDeleteAllOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Excluir Todas as Alocações</DialogTitle>
+                  </DialogHeader>
+                  <p>
+                    Tem certeza que deseja excluir <b>todas as alocações</b>? Esta ação não poderá ser desfeita.
+                  </p>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsDialogDeleteAllOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button variant="destructive" onClick={handleDeletarTodasAlocacoes}>
+                      Excluir
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+                <Dialog open={isDialogAllocateOpen} onOpenChange={setIsDialogAllocateOpen}>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Alocar Automaticamente</DialogTitle>
+                    </DialogHeader>
+                    <p>
+                      Tem certeza que deseja <b>alocar automaticamente</b> todas as turmas em salas disponíveis? 
+                      Essa ação tentará alocar turmas automaticamente com base nas regras definidas.
+                    </p>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setIsDialogAllocateOpen(false)}>
+                        Cancelar
+                      </Button>
+                      <Button variant="default" onClick={handleAlocarAutomaticamente}>
+                        Confirmar Alocação
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
           </div>
         </div>
         </>
