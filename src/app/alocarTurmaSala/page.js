@@ -54,11 +54,19 @@ export default function AlocarTurmaSala() {
     necessitaLoucaDigital: false,
   });
   const [selectedDisciplina, setSelectedDisciplina] = useState(null);
+  // Estados para o modal e dados de alocações
+  const [dialogAlocacoes, setDialogAlocacoes] = useState(false);
+  const [selectedBloco, setSelectedBloco] = useState("");
+  const [selectedSalaId, setSelectedSalaId] = useState(0);
+  const [alocacoesSala, setAlocacoesSala] = useState([]);
+  //Atualiza tabela
+  const [loading, setLoading] = useState(false);
 
 
   useEffect(() => {
     const getTurmasData = async () => {
       try {
+        setLoading(true); // Ativa o estado de carregamento
         const response = await axios.get("http://localhost:5000/api/Turma");
         const turmas = response.data;
     
@@ -91,11 +99,14 @@ export default function AlocarTurmaSala() {
           salaSelecionada: turma.salaSelecionada,
         }));
     
-        setTabela(mapResponse);
+        setTabela(mapResponse); // Atualiza os dados da tabela
       } catch (error) {
         console.error("Erro ao carregar turmas:", error);
+      } finally {
+        setLoading(false); // Desativa o estado de carregamento
       }
-    };       
+    };
+           
 
     const getSalasData = async () => {
       try {
@@ -133,7 +144,7 @@ export default function AlocarTurmaSala() {
       // Mapear Código Horário para DiaSemana e TempoAula
       const horarioMapping = {
         1: { diaSemana: 1, tempoAula: 1 },
-        2: { diaSemana: 1, tempoAula: 3 },
+        2: { diaSemana: 1, tempoAula: 2 }, //alterar de 2 para 3 quando ajeitar o backend
         3: { diaSemana: 2, tempoAula: 3 },
         4: { diaSemana: 3, tempoAula: 1 },
         5: { diaSemana: 4, tempoAula: 1 },
@@ -173,7 +184,6 @@ export default function AlocarTurmaSala() {
         return;
       }
   
-      // Mapear Código Horário para DiaSemana e TempoAula
       const horarioMapping = {
         1: { diaSemana: 1, tempoAula: 1 },
         2: { diaSemana: 1, tempoAula: 3 },
@@ -198,19 +208,20 @@ export default function AlocarTurmaSala() {
   
       await axios.post("http://localhost:5000/api/Turma/alocar-turma", payload);
       alert("Alocação salva com sucesso!");
-      await getTurmasData(); // Atualizar tabela
+      
+      //await getTurmasData(); // Atualiza a tabela
+      window.location.reload();// Recarrega a página após salvar
     } catch (error) {
       console.error("Erro ao salvar alocação:", error);
       alert("Erro ao salvar alocação.");
     }
-  };
+  };  
 
   const handleAlocacoesTurma = async (id) => {
     try {
       const response = await axios.get(`http://localhost:5000/api/Turma/${id}`);
-
       const alocacoes = response.data.alocacoes || [];
-
+  
       const diasDaSemana = [
         "Domingo",        // 0
         "Segunda-feira",  // 1
@@ -218,32 +229,29 @@ export default function AlocarTurmaSala() {
         "Quarta-feira",   // 3
         "Quinta-feira",   // 4
         "Sexta-feira",    // 5
-        "Sábado"          // 6
+        "Sábado",         // 6
       ];
-
-      // Mapeie as alocações substituindo `salaId` por `salaNome` e `tempo` por `diaSemana`
-      const alocacoesComSalaENomeDia = alocacoes.map(alocacao => {
-        const salaEncontrada = salas.find(sala => sala.id === alocacao.salaId);
-
-        // Mapeie tempo para o nome do dia da semana
-        const diaSemana = diasDaSemana[alocacao.tempo] || "Dia inválido";
-
+  
+      const alocacoesComDetalhes = alocacoes.map((alocacao) => {
+        const salaEncontrada = salas.find((sala) => sala.id === alocacao.salaId);
+  
         return {
-          ...alocacao,
-          salaId: salaEncontrada
+          diaSemana: diasDaSemana[alocacao.diaSemana] || "Dia inválido",
+          horario: `Horário ${alocacao.tempo}`,
+          turmaId: alocacao.turmaId || "Não definido",
+          sala: salaEncontrada
             ? `${salaEncontrada.bloco}-${salaEncontrada.numero}`
             : "Sala não encontrada",
-          diaSemana, // Substituindo tempo por dia da semana
         };
       });
-
-      // Atualize o estado com as alocações ajustadas
-      setAlocacoes(alocacoesComSalaENomeDia);
-      console.log("Alocações com sala e dia da semana: ", alocacoesComSalaENomeDia);
+  
+      setAlocacoes(alocacoesComDetalhes);
+      setDialogOpen2(true);
     } catch (error) {
-      console.log(error);
+      console.error("Erro ao buscar alocações da turma:", error);
+      alert("Erro ao buscar alocações da turma.");
     }
-  }
+  };
 
   const handleGerarRelatorioFinal = async () => {
     try {
@@ -274,7 +282,7 @@ export default function AlocarTurmaSala() {
   //mapeamento que relaciona cada dia da semana aos códigos de horário
   const dayToCodeMapping = {
     1: [1, 1, 2], // Segunda
-    2: [3, 1, 2], // Terça
+    2: [2, 1, 3], // Terça
     3: [4, 4, 3], // Quarta
     4: [5, 4, 6], // Quinta
     5: [6, 5], // Sexta
@@ -284,8 +292,8 @@ export default function AlocarTurmaSala() {
   const filteredTable = tabela.filter((row) => {
     // Lógica de filtragem de texto
     const matchesText = Object.values(row).some((value) =>
-      value.toString().toLowerCase().includes(filterValue.toLowerCase())
-    );
+      value && value.toString().toLowerCase().includes(filterValue.toLowerCase())
+    );    
   
     // Lógica de filtragem com base no dia
     const matchesDay = filterDia
@@ -336,7 +344,8 @@ export default function AlocarTurmaSala() {
       alert("Alterações salvas com sucesso!");
       
       setDialogEditOpen(false); // Fecha o modal
-      await getTurmasData(); // Atualiza a tabela com os dados atualizados
+      //await getTurmasData(); // Atualiza a tabela com os dados atualizados
+      window.location.reload();// Recarrega a página após salvar
     } catch (error) {
       alert("Erro ao salvar as alterações.");
       console.error("Erro ao salvar as alterações:", error);
@@ -380,308 +389,560 @@ export default function AlocarTurmaSala() {
     getSalasData();
   }, []);
 
-  //Listar e alocar sala na disciplina
+  // Função para buscar turmas alocadas em uma sala específica
+  const handleBuscarAlocacoes = async () => {
+    try {
+      if (!selectedSalaId) {
+        alert("Selecione um bloco e uma sala.");
+        return;
+      }
   
+      // Chamada à API para buscar as alocações da sala
+      const response = await axios.get(`http://localhost:5000/api/Sala/${selectedSalaId}`);
+      const alocacoes = response.data.alocacoes || [];
+  
+      // Tabela para organizar as alocações (3 horários x 5 dias da semana)
+      const tabela = Array(3)
+        .fill(null)
+        .map(() => Array(5).fill(null));
+  
+      // Mapeie as alocações para a tabela
+      alocacoes.forEach(({ diaSemana, tempo, turmaId }) => {
+        if (diaSemana >= 1 && diaSemana <= 5 && tempo >= 1 && tempo <= 3) {
+          tabela[tempo - 1][diaSemana - 1] = turmaId || "X"; // Preenche com TurmaID ou "X" se indisponível
+        }
+      });
+  
+      setAlocacoesSala(tabela);
+    } catch (error) {
+      console.error("Erro ao buscar alocações:", error);
+      alert("Erro ao buscar alocações.");
+    }
+  };
+  const handleDeletarAlocacao = async (turmaId) => {
+    try {
+      const response = await axios.get(`http://localhost:5000/api/Turma/${turmaId}`);
+      const alocacoes = response.data.alocacoes || [];
+  
+      if (alocacoes.length === 0) {
+        alert("Nenhuma alocação encontrada para esta turma.");
+        return;
+      }
+  
+      for (const alocacao of alocacoes) {
+        await axios.delete(`http://localhost:5000/api/Turma/deletar-alocacao/${alocacao.id}`);
+      }
+  
+      alert("Alocação removida com sucesso!");
+      
+      //await getTurmasData(); // Atualiza a tabela
+      window.location.reload();// Atualiza a pagina
+    } catch (error) {
+      console.error("Erro ao tentar remover a alocação:", error);
+      alert("Erro ao tentar remover a alocação.");
+    }
+  };
+    //Função para alocar turmas automaticamente
+    const handleAlocarAutomaticamente = async () => {
+      try {
+        setLoading(true); // Exibe o estado de carregamento
+        const response = await axios.post("http://localhost:5000/api/Turma/alocar-turmas-automaticamente");
+        alert("Alocação automática realizada com sucesso!");
+        //await getTurmasData(); // Atualiza a tabela
+        window.location.reload();// Recarrega a página após salvar
+      } catch (error) {
+        console.error("Erro ao alocar turmas automaticamente:", error);
+        alert("Erro ao alocar turmas automaticamente.");
+      } finally {
+        setLoading(false); // Remove o estado de carregamento
+      }
+    }; 
+    //Função para deletar todas as alocações
+    const handleDeletarTodasAlocacoes = async () => {
+      try {
+        setLoading(true); // Exibe o estado de carregamento
+    
+        // Busque todas as turmas para obter as alocações
+        const response = await axios.get("http://localhost:5000/api/Turma");
+        const turmas = response.data;
+    
+        if (!turmas || turmas.length === 0) {
+          alert("Nenhuma turma encontrada.");
+          return;
+        }
+    
+        // Itere sobre as turmas e delete suas alocações
+        for (const turma of turmas) {
+          const alocacoesResponse = await axios.get(`http://localhost:5000/api/Turma/${turma.id}`);
+          const alocacoes = alocacoesResponse.data.alocacoes || [];
+    
+          for (const alocacao of alocacoes) {
+            await axios.delete(`http://localhost:5000/api/Turma/deletar-alocacao/${alocacao.id}`);
+          }
+        }
+    
+        alert("Todas as alocações foram removidas com sucesso!");
+        await getTurmasData(); // Atualiza a tabela
+      } catch (error) {
+        console.error("Erro ao deletar todas as alocações:", error);
+        alert("Erro ao deletar todas as alocações.");
+      } finally {
+        setLoading(false); // Remove o estado de carregamento
+      }
+    };        
 
   return (
     <main className="min-h-screen mb-20">
-      <div className="w-full flex font-bold text-4xl justify-center mt-4 mb-8">
-        Alocar Turma na Sala
-      </div>
-
-      <div className="p-6">
-        <div className="flex items-center mb-4 gap-2">
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Filtrar"
-              className="border border-black"
-              value={filterValue}
-              onChange={(e) => setFilterValue(e.target.value)}
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Label htmlFor="dia" className="text-right">
-              Dia da Semana:
-            </Label>
-            <select
-              className="rounded-md border p-2 col-span-3"
-              value={filterDia}
-              onChange={(e) => setFilterDia(e.target.value)}
-            >
-              <option value="">Escolha uma opçao</option>
-              <option value="1">Segunda-Feira</option>
-              <option value="2">Terça-Feira</option>
-              <option value="3">Quarta-Feira</option>
-              <option value="4">Quinta-Feira</option>
-              <option value="5">Sexta-Feira</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-
-            <Label htmlFor="dia" className="text-right">
-              Hora:
-            </Label>
-            <select
-              className="rounded-md border p-2 col-span-3"
-              value={filterHora}
-              onChange={(e) => {
-                const value = e.target.value;
-                setFilterHora(value ? parseInt(value) : 0); // Define o horário ou reseta para 0
-              }}              
-            >
-              <option>Selecione uma Opção</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-            </select>
-          </div>
-          <button className="rounded-md bg-blue-600 text-white p-2" onClick={() => setDialog3(true)}>
-            Gerar Relatório Final
-          </button>
-          <div>
-
-          </div>
+      {loading ? (
+        <div className="flex items-center justify-center h-full">
+          <p className="text-lg text-gray-500">Carregando, por favor aguarde...</p>
+        </div>
+      ) : (
+        <>
+        <div className="w-full flex font-bold text-4xl justify-center mt-4 mb-8">
+          Alocar Turma na Sala
         </div>
 
-        <div className="border rounded-lg p-2">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Disciplina</TableHead>
-                <TableHead>Professor</TableHead>
-                <TableHead>Qtd Alunos</TableHead>
-                <TableHead>Cód. Horário</TableHead>
-                <TableHead>Laboratório</TableHead>
-                <TableHead>Lousa</TableHead>
-                <TableHead>Ar</TableHead>
-                <TableHead>Sala Disponíveis</TableHead>
-                <TableHead>Alocaçoes</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-              <TableBody>
-                {filteredTable
-                  .sort((a, b) => b.quantidadeAlunos - a.quantidadeAlunos) // Ordena aqui diretamente
-                  .map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>{row.disciplina}</TableCell>
-                      <TableCell>{row.professor}</TableCell>
-                      <TableCell>{row.quantidadeAlunos}</TableCell>
-                      <TableCell>{row.codigoHorario}</TableCell>
-                      <TableCell>{row.necessitaLaboratorio ? "Sim" : "Não"}</TableCell>
-                      <TableCell>{row.necessitaLoucaDigital ? "Sim" : "Não"}</TableCell>
-                      <TableCell>{row.necessitaArCondicionado ? "Sim" : "Não"}</TableCell>
-                      <TableCell>
-                        {row.alocada ? (
-                          <span className="text-green-500 font-bold">Alocado</span>
-                        ) : (
-                          <select
-                            className="rounded-md border p-2"
-                            value={selectedSala?.id || ""}
-                            onClick={() => handleBuscarSalasDisponiveis(row)} // Busca salas ao clicar
-                            onChange={(e) => {
-                              const selected = salasDisponiveis[row.id]?.find(
-                                (sala) => sala.id === parseInt(e.target.value)
-                              );
-                              setSelectedSala(selected);
+        <div className="p-6">
+          <div className="flex items-center mb-4 gap-2">
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Filtrar"
+                className="border border-black"
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Label htmlFor="dia" className="text-right">
+                Dia da Semana:
+              </Label>
+              <select
+                className="rounded-md border p-2 col-span-3"
+                value={filterDia}
+                onChange={(e) => setFilterDia(e.target.value)}
+              >
+                <option value="">Escolha uma opçao</option>
+                <option value="1">Segunda-Feira</option>
+                <option value="2">Terça-Feira</option>
+                <option value="3">Quarta-Feira</option>
+                <option value="4">Quinta-Feira</option>
+                <option value="5">Sexta-Feira</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+
+              <Label htmlFor="dia" className="text-right">
+                Hora:
+              </Label>
+              <select
+                className="rounded-md border p-2 col-span-3"
+                value={filterHora}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setFilterHora(value ? parseInt(value) : 0); // Define o horário ou reseta para 0
+                }}              
+              >
+                <option>Selecione uma Opção</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+              <div className="flex items-center gap-2">
+                {/* Botão para abrir alocações */}
+                <button
+                  className="rounded-md bg-blue-600 text-white p-2"
+                  onClick={() => setDialogAlocacoes(true)}
+                >
+                  Alocações
+                </button>
+                
+                {/* Botão para gerar relatório */}
+                <button
+                  className="rounded-md bg-blue-600 text-white p-2"
+                  onClick={() => setDialog3(true)}
+                >
+                  Gerar Relatório Final
+                </button>
+                
+                {/* Botão para alocar turmas automaticamente */}
+                <button
+                  className="rounded-md bg-green-600 text-white p-2"
+                  onClick={handleAlocarAutomaticamente}
+                >
+                  Alocar Automaticamente
+                </button>
+                
+                {/* Botão para deletar todas as alocações */}
+                <button
+                  className="rounded-md bg-red-600 text-white p-2"
+                  onClick={handleDeletarTodasAlocacoes}
+                >
+                  Limpar Todas Alocações
+                </button>
+              </div>
+
+            </div>
+          </div>
+          <div className="border rounded-lg p-2">
+            {loading ? (
+              <p className="text-center text-gray-500">Carregando dados, por favor aguarde...</p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Disciplina</TableHead>
+                    <TableHead>Professor</TableHead>
+                    <TableHead>Qtd Alunos</TableHead>
+                    <TableHead>Cód. Horário</TableHead>
+                    <TableHead>Laboratório</TableHead>
+                    <TableHead>Lousa</TableHead>
+                    <TableHead>Ar</TableHead>
+                    <TableHead>Sala Disponíveis</TableHead>
+                    <TableHead>Alocações</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredTable
+                    .sort((a, b) => b.quantidadeAlunos - a.quantidadeAlunos) // Ordena aqui diretamente
+                    .map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell>{row.disciplina}</TableCell>
+                        <TableCell>{row.professor}</TableCell>
+                        <TableCell>{row.quantidadeAlunos}</TableCell>
+                        <TableCell>{row.codigoHorario}</TableCell>
+                        <TableCell>{row.necessitaLaboratorio ? "Sim" : "Não"}</TableCell>
+                        <TableCell>{row.necessitaLoucaDigital ? "Sim" : "Não"}</TableCell>
+                        <TableCell>{row.necessitaArCondicionado ? "Sim" : "Não"}</TableCell>
+                        <TableCell>
+                          {row.alocada ? (
+                            <span className="text-green-500 font-bold">Alocado</span>
+                          ) : (
+                            <select
+                              className="rounded-md border p-2"
+                              value={selectedSala?.id || ""}
+                              onClick={() => handleBuscarSalasDisponiveis(row)}
+                              onChange={(e) => {
+                                const selected = salasDisponiveis[row.id]?.find(
+                                  (sala) => sala.id === parseInt(e.target.value)
+                                );
+                                setSelectedSala(selected);
+                              }}
+                            >
+                              <option value="">Selecione uma sala</option>
+                              {salasDisponiveis[row.id]?.map((sala) => (
+                                <option key={sala.id} value={sala.id}>
+                                  Sala: Bloco {sala.bloco} - Número {sala.numero}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <button
+                            className="mr-2 text-blue-500 hover:text-blue-700"
+                            onClick={() => handleEditPreferences(row)}
+                          >
+                            <Pencil />
+                          </button>
+                          <button
+                            className="mr-2 text-green-500 hover:text-green-700"
+                            onClick={() => {
+                              handleAlocacoesTurma(row.id);
+                              setDialogOpen2(true);
                             }}
                           >
-                            <option value="">Selecione uma sala</option>
-                            {salasDisponiveis[row.id]?.map((sala) => (
-                              <option key={sala.id} value={sala.id}>
-                                Sala: Bloco {sala.bloco} - Número {sala.numero}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <button
-                          className="mr-2 text-blue-500 hover:text-blue-700"
-                          onClick={() => handleEditPreferences(row)}
-                        >
-                          <Pencil />
-                        </button>
-                        <button
-                          className="mr-2 text-green-500 hover:text-green-700"
-                          onClick={() => {
-                            handleAlocacoesTurma(row.id);
-                            setDialogOpen2(true);
-                          }}
-                        >
-                          <Eye />
-                        </button>
-                      </TableCell>
-                      <TableCell>
-                        {row.alocada ? (
-                          <button
-                            className="rounded-md bg-gray-400 text-white p-2 cursor-not-allowed"
-                            disabled
-                          >
-                            Alocado
+                            <Eye />
                           </button>
-                        ) : (
-                          <button
-                            className="rounded-md bg-blue-600 text-white p-2"
-                            onClick={() => handleSalvarAlocacao(row)} // Salvar alocação
-                          >
-                            Salvar
-                          </button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-              </TableBody>
+                        </TableCell>
+                        <TableCell>
+                          {row.alocada ? (
+                            <button
+                              className="rounded-md bg-red-600 text-white p-2"
+                              onClick={() => handleDeletarAlocacao(row.id)}
+                            >
+                              Limpar
+                            </button>
+                          ) : (
+                            <button
+                              className="rounded-md bg-blue-600 text-white p-2"
+                              onClick={() => handleSalvarAlocacao(row)}
+                            >
+                              Salvar
+                            </button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
 
-          </Table>
-        </div>
 
-        <div className="">
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogContent asChild>
-              <DialogHeader>
-                <DialogTitle>Alocar Turma</DialogTitle>
-                <DialogDescription>
-                  {selectedTurma && (
-                    <>
-                      <p>Tem certeza que deseja alocar a turma {selectedTurma.disciplina} do professor {selectedTurma.professor} na sala {selectedSala.numero} bloco {selectedSala.bloco}?</p>
-                    </>
-                  )}
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                <Button type="button" onClick={() => {
-                  handleAlocarTurmaSala();
-                  setDialogOpen(false);
-                }}
-                >
-                  Sim
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={dialogOpen2} onOpenChange={setDialogOpen2}>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Alocaçoes</DialogTitle>
-                <DialogDescription>
-                  {alocacoes && alocacoes.length > 0 ? (
-                    alocacoes.map((alocacao, index) => (
-                      <p key={index}>
-                        Dia da Semana: {alocacao.diaSemana}, Tempo: {alocacao.tempo},
-                        Sala: {alocacao.salaId}, Turma ID: {alocacao.turmaId}
-                      </p>
-                    ))
-                  ) : (
-                    <p>Nenhuma alocação encontrada.</p>
-                  )}
-                </DialogDescription>
-              </DialogHeader>
-
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen2(false)}>Fechar</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={dialog3} onOpenChange={setDialog3}>
-            <DialogContent className="max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Baixar PDF</DialogTitle>
-              </DialogHeader>
-
-              <DialogDescription>
-                <div className="overflow-x-auto">
-                  <Label htmlFor="dia" className="text-right">
-                    Dia da Semana:
-                  </Label>
-                  <select
-                    className="rounded-md border p-2 col-span-3"
-                    value={diaPDF}
-                    onChange={(e) => setDiaPDF(e.target.value)}
+          <div className="">
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogContent asChild>
+                <DialogHeader>
+                  <DialogTitle>Alocar Turma</DialogTitle>
+                  <DialogDescription>
+                    {selectedTurma && (
+                      <>
+                        <p>Tem certeza que deseja alocar a turma {selectedTurma.disciplina} do professor {selectedTurma.professor} na sala {selectedSala.numero} bloco {selectedSala.bloco}?</p>
+                      </>
+                    )}
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+                  <Button type="button" onClick={() => {
+                    handleAlocarTurmaSala();
+                    setDialogOpen(false);
+                  }}
                   >
-                    <option value="">Escolha uma opçao</option>
-                    <option value="1">Segunda-Feira</option>
-                    <option value="2">Terça-Feira</option>
-                    <option value="3">Quarta-Feira</option>
-                    <option value="4">Quinta-Feira</option>
-                    <option value="5">Sexta-Feira</option>
-                  </select>
-                </div>
-              </DialogDescription>
+                    Sim
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDialog3(false)}>
-                  Fechar
-                </Button>
-                <Button variant="outline" onClick={() => handleGerarRelatorioFinal()}>
-                  Baixar PDF
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          <Dialog open={dialogEditOpen} onOpenChange={setDialogEditOpen}>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle className="text-xl">Editar Preferências da Disciplina</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="lab" className="text-right">Laboratório:</Label>
-                  <Input
-                    id="lab"
-                    type="checkbox"
-                    checked={selectedDisciplina?.necessitaLaboratorio || false}
-                    onChange={(e) =>
-                      setSelectedDisciplina({
-                        ...selectedDisciplina,
-                        necessitaLaboratorio: e.target.checked,
-                      })
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="lousa" className="text-right">Lousa Digital:</Label>
-                  <Input
-                    id="lousa"
-                    type="checkbox"
-                    checked={selectedDisciplina?.necessitaLoucaDigital || false}
-                    onChange={(e) =>
-                      setSelectedDisciplina({
-                        ...selectedDisciplina,
-                        necessitaLoucaDigital: e.target.checked,
-                      })
-                    }
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="ar" className="text-right">Ar Condicionado:</Label>
-                  <Input
-                    id="ar"
-                    type="checkbox"
-                    checked={selectedDisciplina?.necessitaArCondicionado || false}
-                    onChange={(e) =>
-                      setSelectedDisciplina({
-                        ...selectedDisciplina,
-                        necessitaArCondicionado: e.target.checked,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setDialogEditOpen(false)}>Cancelar</Button>
-                <Button onClick={handleSavePreferences}>Salvar</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            <Dialog open={dialogOpen2} onOpenChange={setDialogOpen2}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Detalhes das Alocações</DialogTitle>
+                  <DialogDescription>
+                    {alocacoes && alocacoes.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Dia da Semana</TableHead>
+                            <TableHead>Horário</TableHead>
+                            <TableHead>Turma ID</TableHead>
+                            <TableHead>Sala</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {alocacoes.map((alocacao, index) => (
+                            <TableRow key={index}>
+                              <TableCell>{alocacao.diaSemana}</TableCell>
+                              <TableCell>{alocacao.horario}</TableCell>
+                              <TableCell>{alocacao.turmaId}</TableCell>
+                              <TableCell>{alocacao.sala}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <p>Nenhuma alocação encontrada.</p>
+                    )}
+                  </DialogDescription>
+                </DialogHeader>
 
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setDialogOpen2(false)}>
+                    Fechar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={dialog3} onOpenChange={setDialog3}>
+              <DialogContent className="max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Baixar PDF</DialogTitle>
+                </DialogHeader>
+
+                <DialogDescription>
+                  <div className="overflow-x-auto">
+                    <Label htmlFor="dia" className="text-right">
+                      Dia da Semana:
+                    </Label>
+                    <select
+                      className="rounded-md border p-2 col-span-3"
+                      value={diaPDF}
+                      onChange={(e) => setDiaPDF(e.target.value)}
+                    >
+                      <option value="">Escolha uma opçao</option>
+                      <option value="1">Segunda-Feira</option>
+                      <option value="2">Terça-Feira</option>
+                      <option value="3">Quarta-Feira</option>
+                      <option value="4">Quinta-Feira</option>
+                      <option value="5">Sexta-Feira</option>
+                    </select>
+                  </div>
+                </DialogDescription>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setDialog3(false)}>
+                    Fechar
+                  </Button>
+                  <Button variant="outline" onClick={() => handleGerarRelatorioFinal()}>
+                    Baixar PDF
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={dialogEditOpen} onOpenChange={setDialogEditOpen}>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle className="text-xl">Editar Preferências da Disciplina</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="lab" className="text-right">Laboratório:</Label>
+                    <Input
+                      id="lab"
+                      type="checkbox"
+                      checked={selectedDisciplina?.necessitaLaboratorio || false}
+                      onChange={(e) =>
+                        setSelectedDisciplina({
+                          ...selectedDisciplina,
+                          necessitaLaboratorio: e.target.checked,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="lousa" className="text-right">Lousa Digital:</Label>
+                    <Input
+                      id="lousa"
+                      type="checkbox"
+                      checked={selectedDisciplina?.necessitaLoucaDigital || false}
+                      onChange={(e) =>
+                        setSelectedDisciplina({
+                          ...selectedDisciplina,
+                          necessitaLoucaDigital: e.target.checked,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="ar" className="text-right">Ar Condicionado:</Label>
+                    <Input
+                      id="ar"
+                      type="checkbox"
+                      checked={selectedDisciplina?.necessitaArCondicionado || false}
+                      onChange={(e) =>
+                        setSelectedDisciplina({
+                          ...selectedDisciplina,
+                          necessitaArCondicionado: e.target.checked,
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setDialogEditOpen(false)}>Cancelar</Button>
+                  <Button onClick={handleSavePreferences}>Salvar</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+            <Dialog open={dialogAlocacoes} onOpenChange={setDialogAlocacoes}>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Alocações</DialogTitle>
+                </DialogHeader>
+
+                <div className="grid gap-4 py-4">
+                  {/* Seleção de Bloco */}
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="bloco" className="text-right">
+                      Bloco
+                    </Label>
+                    <select
+                      id="bloco"
+                      className="rounded-md border p-2 col-span-3"
+                      value={selectedBloco}
+                      onChange={(e) => setSelectedBloco(e.target.value)}
+                    >
+                      <option value="">Selecione um bloco</option>
+                      {salas.map((sala) => (
+                        <option key={sala.bloco} value={sala.bloco}>
+                          {sala.bloco}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Seleção de Sala */}
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="sala" className="text-right">
+                      Sala
+                    </Label>
+                    <select
+                      id="sala"
+                      className="rounded-md border p-2 col-span-3"
+                      value={selectedSalaId}
+                      onChange={(e) => setSelectedSalaId(e.target.value)}
+                    >
+                      <option value="">Selecione uma sala</option>
+                      {salas
+                        .filter((sala) => sala.bloco === selectedBloco)
+                        .map((sala) => (
+                          <option key={sala.id} value={sala.id}>
+                            {sala.numero}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  {/* Botão para buscar alocações */}
+                  <Button
+                    variant="outline"
+                    onClick={handleBuscarAlocacoes}
+                    className="mt-4"
+                  >
+                    Buscar Alocações
+                  </Button>
+                </div>
+
+                {/* Tabela de Alocações */}
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Horário</TableHead>
+                        <TableHead>Segunda</TableHead>
+                        <TableHead>Terça</TableHead>
+                        <TableHead>Quarta</TableHead>
+                        <TableHead>Quinta</TableHead>
+                        <TableHead>Sexta</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {alocacoesSala.map((linha, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{`Horário ${index + 1}`}</TableCell>
+                          {linha.map((celula, i) => (
+                            <TableCell
+                              key={i}
+                              className={`border px-2 py-1 ${
+                                celula ? "bg-green-300" : "bg-red-300"
+                              }`}
+                            >
+                              {celula || ""}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setDialogAlocacoes(false)}>
+                    Fechar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
-      </div>
+        </>
+      )}
     </main>
   );
 }
