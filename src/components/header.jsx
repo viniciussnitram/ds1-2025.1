@@ -16,7 +16,13 @@ export default function Header() {
       <Link href="/" className="flex items-center">
 
         <div className="flex items-center">
-          <Image className="h-[60px] w-[80px] rounded-md" src="./femasslogo.jpg" alt="FeMASS Logo" />
+          <Image
+            className="rounded-md"
+            height={60}
+            width={80}
+            src="/femasslogo.jpg"
+            alt="FeMASS Logo"
+          />
           <div className="font-bold ml-2 text-xl">Desenvolvimento de Sistemas 1</div>
         </div>
       </Link>
