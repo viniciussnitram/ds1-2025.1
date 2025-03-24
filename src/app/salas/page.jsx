@@ -267,7 +267,6 @@ export default function CadastrarSala() {
                         onChange={(e) => setNumero(e.target.value)}
                       />
                     </div>
-
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="username" className="text-right">
                         Capacidade:
@@ -279,45 +278,41 @@ export default function CadastrarSala() {
                         onChange={(e) => setCapacidade(e.target.value)}
                       />
                     </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="username" className="text-right">
-                        Ar:
-                      </Label>
-                      <Input
-                        id="username"
-                        className="col-span-3"
-                        type="checkbox"
-                        checked={ar}
-                        onChange={(e) => setAr(e.target.checked)}
-                      />
+                    
+                    <div className="grid grid-cols-3 items-center gap-3 ml-36">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="lab"
+                          type="checkbox"
+                          checked={lab}
+                          onChange={(e) => setLab(e.target.checked)}
+                          className="w-4 h-4"
+                        />
+                        <Label htmlFor="lab" className="text-right">Laboratório</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="lousa"
+                          className="w-4 h-4"
+                          type="checkbox"
+                          checked={lousa}
+                          onChange={(e) => setLousa(e.target.checked)}
+                        />
+                        <Label htmlFor="lousa" className="text-right">Lousa Digital</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          id="ar"
+                          type="checkbox"
+                          checked={ar}
+                          onChange={(e) => setAr(e.target.checked)}
+                          className="w-4 h-4"
+                        />
+                        <Label htmlFor="ar" className="text-sm font-medium">Ar</Label>
+                      </div>
                     </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="username" className="text-right">
-                        Laboratório:
-                      </Label>
-                      <Input
-                        id="username"
-                        className="col-span-3"
-                        type="checkbox"
-                        checked={lab}
-                        onChange={(e) => setLab(e.target.checked)}
-                      />
-                    </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="username" className="text-right">
-                        Lousa Digital:
-                      </Label>
-                      <Input
-                        id="username"
-                        className="col-span-3"
-                        type="checkbox"
-                        checked={lousa}
-                        onChange={(e) => setLousa(e.target.checked)}
-                      />
-                    </div>
                   </div>
 
                   <DialogFooter>
