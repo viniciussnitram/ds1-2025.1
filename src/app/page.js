@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import axios from "axios";
-import * as XLSX from 'xlsx';
-import { Button } from "@/components/ui/button"
+import * as XLSX from "xlsx";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -20,11 +20,11 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
 export default function Home() {
   const [tabela, setTabela] = useState();
-  const [filterValue, setFilterValue] = useState('');
+  const [filterValue, setFilterValue] = useState("");
   const [tabelaOriginal, setTabelaOriginal] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -44,20 +44,19 @@ export default function Home() {
       const sheet = workbook.Sheets[sheetName];
       const parsedData = XLSX.utils.sheet_to_json(sheet);
 
-      const mappedTabela = parsedData
-        .map((tabela, index) => ({
-          id: index + 1,
-          codigoTurma: tabela.codigoturma,
-          professor: tabela.professor,
-          disciplina: tabela.disciplina,
-          quantidade: tabela.quantidade,
-          codigoHorario: tabela.codigohorario,
-        }));
+      const mappedTabela = parsedData.map((tabela, index) => ({
+        id: index + 1,
+        codigoTurma: tabela.codigoturma,
+        professor: tabela.professor,
+        disciplina: tabela.disciplina,
+        quantidade: tabela.quantidade,
+        codigoHorario: tabela.codigohorario,
+      }));
 
       setTabelaOriginal(mappedTabela);
       setTabela(mappedTabela);
     };
-  }
+  };
 
   const handleUploadExcel = async () => {
     try {
@@ -68,7 +67,10 @@ export default function Home() {
 
       const formData = new FormData();
       formData.append("file", selectedFile);
-      const response = await axios.post("http://localhost:5000/api/Turma/importar-excel-turmas", formData);
+      const response = await axios.post(
+        "http://localhost:5000/api/Turma/importar-excel-turmas",
+        formData
+      );
       console.log(response.data);
       setTabelaOriginal([]);
       setTabela([]);
@@ -80,31 +82,36 @@ export default function Home() {
 
   const handleEncerrarPeriodo = async () => {
     try {
-      const response = await axios.post("http://localhost:5000/api/Turma/limpar-semestre");
+      const response = await axios.post(
+        "http://localhost:5000/api/Turma/limpar-semestre"
+      );
       setDialogOpen2(false);
     } catch (error) {
       console.error(error);
     }
-  }
+  };
 
   return (
-    <main className="min-h-screen mb-20">
-      <div className="w-full flex font-bold text-4xl justify-center mt-4 mb-8">FEMASS</div>
-      <div className="w-full flex font-bold text-2xl justify-center italic mt-4 mb-16">Bem vindo ao aplicativo de alocação de turmas</div>
+    <main className="mb-20">
+      <div className="w-full flex font-bold text-4xl justify-center mt-4 mb-8">
+        FEMASS
+      </div>
+      <div className="w-full flex font-bold text-2xl justify-center italic mt-4 mb-16">
+        Bem vindo ao aplicativo de alocação de turmas
+      </div>
 
       <div className="ml-2">
         <div className="">
           <label>Importar Arquivo Excel: </label>
-          <input
-            type="file"
-            accept=".xlsx, .xls"
-            onChange={handleFileUpload}
-          />
+          <input type="file" accept=".xlsx, .xls" onChange={handleFileUpload} />
         </div>
         <div className="mt-4">
           <Dialog open={dialogOpen2} onOpenChange={setDialogOpen2}>
             <DialogTrigger asChild>
-              <button className="rounded-md bg-blue-600 text-white p-2" onClick={() => setDialogOpen2(true)}>
+              <button
+                className="rounded-md bg-blue-600 text-white p-2"
+                onClick={() => setDialogOpen2(true)}
+              >
                 Encerrar Período Letivo
               </button>
             </DialogTrigger>
@@ -112,18 +119,23 @@ export default function Home() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Encerrar Período Letivo</DialogTitle>
-                <DialogDescription>Tem certeza que deseja encerrar o período letivo?</DialogDescription>
+                <DialogDescription>
+                  Tem certeza que deseja encerrar o período letivo?
+                </DialogDescription>
               </DialogHeader>
 
               <form>
                 <DialogFooter>
-                  <Button type="button" variant="outline">Cancelar</Button>
-                  <Button type="button" onClick={handleEncerrarPeriodo}>Sim</Button>
+                  <Button type="button" variant="outline">
+                    Cancelar
+                  </Button>
+                  <Button type="button" onClick={handleEncerrarPeriodo}>
+                    Sim
+                  </Button>
                 </DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
-
         </div>
       </div>
 
@@ -164,7 +176,11 @@ export default function Home() {
 
                       <form>
                         <DialogFooter>
-                          <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setDialogOpen(false)}
+                          >
                             Cancelar
                           </Button>
                           <Button type="button" onClick={handleUploadExcel}>
