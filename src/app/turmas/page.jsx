@@ -552,7 +552,7 @@ setDialogEditOpen(false); // Fecha o modal
     };        
 
   return (
-    <main className="min-h-screen mb-20">
+    <main className="mb-20">
       {loading ? (
         <div className="flex items-center justify-center h-full">
           <p className="text-lg text-gray-500">Carregando, por favor aguarde...</p>
