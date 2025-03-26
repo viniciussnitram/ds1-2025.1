@@ -88,7 +88,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen mb-20">
+    <main className="mb-20">
       <div className="w-full flex font-bold text-4xl justify-center mt-4 mb-8">FEMASS</div>
       <div className="w-full flex font-bold text-2xl justify-center italic mt-4 mb-16">Bem vindo ao aplicativo de alocação de turmas</div>
 
@@ -114,10 +114,10 @@ export default function Home() {
                 <DialogTitle>Encerrar Período Letivo</DialogTitle>
                 <DialogDescription>Tem certeza que deseja encerrar o período letivo?</DialogDescription>
               </DialogHeader>
-
+    
               <form>
                 <DialogFooter>
-                  <Button type="button" variant="outline">Cancelar</Button>
+                  <Button type="button" variant="outline" onClick={() => setDialogOpen2(false)}>Cancelar</Button>
                   <Button type="button" onClick={handleEncerrarPeriodo}>Sim</Button>
                 </DialogFooter>
               </form>

@@ -209,7 +209,7 @@ export default function CadastrarSala() {
   };
 
   return (
-    <main className="w-full min-h-screen">
+    <main className="w-full">
       <div className="w-full flex font-bold text-4xl justify-center mt-4 mb-8">
         Salas
       </div>
