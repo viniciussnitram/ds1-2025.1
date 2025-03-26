@@ -911,9 +911,9 @@ setDialogEditOpen(false); // Fecha o modal
 
                 <div className="grid gap-4 py-4">
                   {/* Seleção de Bloco */}
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="bloco" className="text-right">
-                      Bloco
+                  <div className="flex flex-col ml-6">
+                    <Label htmlFor="bloco" className="pb-2">
+                      Bloco:
                     </Label>
                     <select
                       id="bloco"
@@ -931,9 +931,9 @@ setDialogEditOpen(false); // Fecha o modal
                   </div>
 
                   {/* Seleção de Sala */}
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="sala" className="text-right">
-                      Sala
+                  <div className="flex flex-col ml-6">
+                    <Label htmlFor="sala" className="pb-2">
+                      Sala:
                     </Label>
                     <select
                       id="sala"

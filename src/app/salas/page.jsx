@@ -348,9 +348,9 @@ export default function CadastrarSala() {
                   </DialogHeader>
 
                   <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="bloco" className="text-right">
-                        Bloco
+                    <div className="flex flex-col ml-6">
+                      <Label htmlFor="bloco" className="pb-2">
+                        Bloco:
                       </Label>
                       <select
                         className="rounded-md border p-2 col-span-3"
@@ -365,9 +365,9 @@ export default function CadastrarSala() {
                       </select>
                     </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="numero" className="text-right">
-                        Numero
+                    <div className="flex flex-col ml-6">
+                      <Label htmlFor="numero" className="pb-2">
+                        Numero:
                       </Label>
                       <select
                         className="rounded-md border p-2 col-span-3"
@@ -386,8 +386,8 @@ export default function CadastrarSala() {
                     </div>
 
                     {/* Seleção do Dia da Semana */}
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="diaSemana" className="text-right">Dia da Semana</Label>
+                    <div className="flex flex-col ml-6">
+                      <Label htmlFor="diaSemana" className="pb-2">Dia da Semana:</Label>
                       <select
                         id="diaSemana"
                         className="rounded-md border p-2 col-span-3"
@@ -403,9 +403,9 @@ export default function CadastrarSala() {
                       </select>
                     </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="horario" className="text-right">
-                        Horario
+                    <div className="flex flex-col ml-6">
+                      <Label htmlFor="horario" className="pb-2">
+                        Horario:
                       </Label>
 
                       <select
