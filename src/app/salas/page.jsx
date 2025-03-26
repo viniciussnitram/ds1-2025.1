@@ -237,13 +237,13 @@ export default function CadastrarSala() {
                       Cadastrar Sala
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="name" className="text-right">
-                        Bloco
+                  <div className="grid gap-4 py-4 ">
+                    <div className="flex flex-col ml-6">
+                      <Label htmlFor="name" className="pb-2">
+                        Bloco:
                       </Label>
                       <select
-                        className="rounded-md border p-2 col-span-3"
+                        className="rounded-md border p-2"
                         value={bloco}
                         onChange={(e) => setBloco(e.target.value)}
                       >
@@ -255,8 +255,8 @@ export default function CadastrarSala() {
                       </select>
                     </div>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="username" className="text-right">
+                    <div className="flex flex-col ml-6">
+                      <Label htmlFor="username" className="pb-2">
                         Número:
                       </Label>
                       <Input
@@ -267,8 +267,8 @@ export default function CadastrarSala() {
                         onChange={(e) => setNumero(e.target.value)}
                       />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="username" className="text-right">
+                    <div className="flex flex-col ml-6">
+                      <Label htmlFor="username" className="pb-2">
                         Capacidade:
                       </Label>
                       <Input
@@ -278,8 +278,8 @@ export default function CadastrarSala() {
                         onChange={(e) => setCapacidade(e.target.value)}
                       />
                     </div>
-                    
-                    <div className="grid grid-cols-3 items-center gap-3 ml-36">
+
+                    <div className="grid grid-cols-3 items-center gap-3 ml-6">
                       <div className="flex items-center gap-2">
                         <Input
                           id="lab"
