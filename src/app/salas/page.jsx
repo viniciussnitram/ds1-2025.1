@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import axios from "axios";
+import { RoomsService } from "@/services/RoomsService";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -54,73 +54,65 @@ export default function CadastrarSala() {
   });
 
   useEffect(() => {
-    const getSala = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/Sala");
-        setTabela(response.data);
-      } catch (error) {
+    RoomsService.getAllRooms()
+      .then(setTabela)
+      .catch((error) => {
         console.log(error);
-      }
-    };
-    getSala();
+      });
   }, []);
 
-  const postSala = async () => {
+  const handleSubmitRoom = async (event) => {
     event.preventDefault();
 
-    try {
-      const sala = {
-        capacidadeMaxima: capacidade,
-        possuiLaboratorio: lab ? lab : false,
-        possuiArCondicionado: ar ? ar : false,
-        possuiLoucaDigital: lousa ? lousa : false,
-        bloco: bloco,
-        numero: numero,
-      };
-      const response = await axios.post("http://localhost:5000/api/Sala", sala);
-      setTabela((prevTabela) => [...prevTabela, response.data]);
-    } catch (error) {
-      alert(error.response.data.errors);
-      console.log(error);
-    }
+    const payload = {
+      capacidadeMaxima: capacidade,
+      possuiLaboratorio: lab ? lab : false,
+      possuiArCondicionado: ar ? ar : false,
+      possuiLoucaDigital: lousa ? lousa : false,
+      bloco: bloco,
+      numero: numero,
+    };
+
+    RoomsService.createRoom(payload)
+      .then((response) => {
+        setTabela((prevTable) => [...prevTable, response.data]);
+      })
+      .catch((error) => {
+        alert(error.response.data.errors);
+        console.log(error);
+      })
   };
 
-  const postIndisponibilidade = async () => {
+  const handleSubmitUnavailable = async (event) => {
     event.preventDefault();
 
-    try {
-      // Verificar se já existe uma indisponibilidade com o mesmo dia e horário
-      const duplicada = indisponibilidades.some(
-        (indisponibilidade) =>
-          indisponibilidade.diaSemana === parseInt(selectedDiaSemana) &&
-          indisponibilidade.tempo === parseInt(selectedHorario)
-      );
+    // Verificar se já existe uma indisponibilidade com o mesmo dia e horário
+    const duplicada = indisponibilidades.some(
+      (indisponibilidade) =>
+        indisponibilidade.diaSemana === parseInt(selectedDiaSemana) &&
+        indisponibilidade.tempo === parseInt(selectedHorario)
+    );
 
-      if (duplicada) {
-        alert("Essa indisponibilidade já está registrada para a sala selecionada.");
-        return;
-      }
-
-      const indisponibilidade = {
-        salaId: parseInt(selectedSalaId),
-        diaSemana: parseInt(selectedDiaSemana),
-        tempo: parseInt(selectedHorario),
-      };
-
-      // Faz a requisição POST para adicionar a indisponibilidade
-      await axios.post(
-        `http://localhost:5000/api/Sala/${selectedSalaId}/indisponibilidade`,
-        indisponibilidade
-      );
-
-      // Atualiza as indisponibilidades buscando do banco
-      await fetchIndisponibilidades(selectedSalaId);
-
-      alert("Indisponibilidade adicionada com sucesso.");
-    } catch (error) {
-      alert("Erro ao adicionar indisponibilidade.");
-      console.error("Erro ao adicionar indisponibilidade:", error);
+    if (duplicada) {
+      alert("Essa indisponibilidade já está registrada para a sala selecionada.");
+      return;
     }
+
+    const indisponibilidade = {
+      salaId: parseInt(selectedSalaId),
+      diaSemana: parseInt(selectedDiaSemana),
+      tempo: parseInt(selectedHorario),
+    };
+
+    RoomsService.unavailableRoom(selectedSalaId, indisponibilidade)
+      .then(() => alert("Indisponibilidade adicionada com sucesso."))
+      .catch((error) => {
+        alert("Erro ao adicionar indisponibilidade.");
+        console.error("Erro ao adicionar indisponibilidade:", error);
+      });
+
+    // Atualiza as indisponibilidades buscando do banco
+    await fetchIndisponibilidades(selectedSalaId);
   };
 
   const handleEditSala = (sala) => {
@@ -144,59 +136,58 @@ export default function CadastrarSala() {
 
   // Atualizar os dados da sala
   const handleUpdateSala = async () => {
-    try {
-      await axios.put(`http://localhost:5000/api/Sala/${editSala.id}`, editSala);
-      setTabela((prev) => prev.map((s) => (s.id === editSala.id ? editSala : s)));
-      setIsDialogEditOpen(false);
-    } catch (error) {
-      console.error("Erro ao atualizar a sala:", error);
-    }
+    RoomsService.editRoom(editSala.id, editSala)
+      .then(() => {
+        setTabela((prev) => prev.map((s) => (s.id === editSala.id ? editSala : s)));
+      })
+      .catch((error) => {
+        console.error("Erro ao atualizar a sala:", error);
+      })
+      .finally(() => setIsDialogEditOpen(false))
   };
 
   const handleDeleteSala = async () => {
-    try {
-      // 1. Buscar todas as indisponibilidades da sala
-      const response = await axios.get(`http://localhost:5000/api/Sala/${selectedSalaId}`);
-      const indisponibilidades = response.data.indisponibilidades || [];
+    let indisponibilidades = [];
 
-      if (indisponibilidades.length === 0) {
-        alert("Nenhuma indisponibilidade encontrada para esta sala.");
+    RoomsService.getRoomById(selectedSalaId)
+      .then(async (response) => {
+        indisponibilidades = response.data.indisponibilidades;
+
+        if (indisponibilidades.length === 0) {
+          alert("Nenhuma indisponibilidade encontrada para esta sala.");
+          setIsDialogDeleteOpen(false);
+          return;
+        }
+
+        // 2. Deletar cada indisponibilidade individualmente
+        for (const indisponibilidade of indisponibilidades) {
+          RoomsService.removeUnavailableRoom(selectedSalaId, indisponibilidade.id)
+        }
+
+        // 3. Atualizar a tabela de indisponibilidades e fechar o modal
+        await fetchIndisponibilidades(selectedSalaId);
         setIsDialogDeleteOpen(false);
-        return;
-      }
 
-      // 2. Deletar cada indisponibilidade individualmente
-      for (const indisponibilidade of indisponibilidades) {
-        await axios.delete(
-          `http://localhost:5000/api/Sala/${selectedSalaId}/indisponibilidade/${indisponibilidade.id}`
-        );
-      }
-
-      // 3. Atualizar a tabela de indisponibilidades e fechar o modal
-      await fetchIndisponibilidades(selectedSalaId);
-      setIsDialogDeleteOpen(false);
-
-      alert("Todas as indisponibilidades da sala foram excluídas com sucesso.");
-    } catch (error) {
-      console.error("Erro ao excluir indisponibilidades:", error);
-      alert("Erro ao excluir as indisponibilidades.");
-    }
+        alert("Todas as indisponibilidades da sala foram excluídas com sucesso.");
+      }).catch((error) => {
+        console.error("Erro ao excluir indisponibilidades:", error);
+        alert("Erro ao excluir as indisponibilidades.");
+      })
   };
-
-
 
   //Função para Buscar Indisponibilidades
   const fetchIndisponibilidades = async (salaId) => {
-    try {
-      const response = await axios.get(`http://localhost:5000/api/Sala/${salaId}`);
-      console.log("Dados da sala recebidos:", response.data);
+    RoomsService.getRoomById(salaId)
+      .then((response) => {
+        console.log("Dados da sala recebidos:", response.data);
 
-      // Atualiza o estado com as indisponibilidades
-      setIndisponibilidades(response.data.indisponibilidades || []);
-      setIsIndisponibilidadeListOpen(true); // Abre o modal
-    } catch (error) {
-      console.error("Erro ao buscar os dados da sala:", error);
-    }
+        // Atualiza o estado com as indisponibilidades
+        setIndisponibilidades(response.data.indisponibilidades || []);
+        setIsIndisponibilidadeListOpen(true); // Abre o modal
+      })
+      .catch((error) => {
+        console.error("Erro ao buscar os dados da sala:", error);
+      })
   };
 
   //organiza as indisponibilidades em um formato que facilite a exibição
@@ -324,7 +315,7 @@ export default function CadastrarSala() {
                         Cancelar
                       </Button>
                     </DialogClose>
-                    <Button type="submit" onClick={postSala}>
+                    <Button type="submit" onClick={(e) => handleSubmitRoom(e)}>
                       Salvar
                     </Button>
                   </DialogFooter>
@@ -428,7 +419,7 @@ export default function CadastrarSala() {
                         Cancelar
                       </Button>
                     </DialogClose>
-                    <Button type="button" onClick={postIndisponibilidade}>Sim</Button>
+                    <Button type="button" onClick={(e) => handleSubmitUnavailable(e)}>Sim</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
