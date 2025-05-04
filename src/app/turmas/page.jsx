@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DisciplineService } from "@/services/DisciplineService";
 import { RoomsService } from "@/services/RoomsService";
 import axios from "axios";
 import { Eye, Pencil } from "lucide-react";
@@ -343,56 +344,58 @@ export default function AlocarTurmaSala() {
 
   //Função para abrir o diálogo de edição
   const handleEditPreferences = async (turma) => {
-    try {
-      const disciplinaId = turma.disciplinaId; // Certifique-se de que este é o campo correto
-      if (!disciplinaId) {
-        throw new Error("ID da disciplina não encontrado.");
-      }
-      const response = await axios.get(`http://localhost:5000/api/Disciplina/${disciplinaId}`);
-      setSelectedDisciplina(response.data); // Define a disciplina selecionada no estado
-      setDialogEditOpen(true); // Abre o modal para edição
-    } catch (error) {
-      console.error("Erro ao buscar detalhes da disciplina:", error);
-      alert("Erro ao buscar detalhes da disciplina.");
+    const disciplinaId = turma.disciplinaId; // Certifique-se de que este é o campo correto
+    if (!disciplinaId) {
+      throw new Error("ID da disciplina não encontrado.");
     }
+
+    DisciplineService.getDisciplineById(disciplinaId)
+      .then((response) => {
+        setSelectedDisciplina(response.data); // Define a disciplina selecionada no estado
+        setDialogEditOpen(true); // Abre o modal para edição
+      })
+      .catch((error) => {
+        console.error("Erro ao buscar detalhes da disciplina:", error);
+        alert("Erro ao buscar detalhes da disciplina.");
+      });
   };
 
   //Função para salvar as edições
   const handleSavePreferences = async () => {
-    try {
-      if (!selectedDisciplina) {
-        throw new Error("Nenhuma disciplina selecionada.");
-      }
-
-      const payload = {
-        id: selectedDisciplina.id,
-        necessitaLaboratorio: selectedDisciplina.necessitaLaboratorio,
-        necessitaLoucaDigital: selectedDisciplina.necessitaLoucaDigital,
-        necessitaArCondicionado: selectedDisciplina.necessitaArCondicionado,
-      };
-
-      console.log("Payload enviado para API:", payload); // Para depuração
-
-      await axios.put(`http://localhost:5000/api/Disciplina/${selectedDisciplina.id}`, payload);
-      // Atualiza a tabela localmente
-      const updatedTabela = tabela.map((row) => {
-        if (row.disciplinaId === selectedDisciplina.id) {
-          return {
-            ...row,
-            necessitaLaboratorio: selectedDisciplina.necessitaLaboratorio,
-            necessitaLoucaDigital: selectedDisciplina.necessitaLoucaDigital,
-            necessitaArCondicionado: selectedDisciplina.necessitaArCondicionado,
-          };
-        }
-        return row;
-      });
-      setTabela(updatedTabela);
-
-      setDialogEditOpen(false); // Fecha o modal
-    } catch (error) {
-      alert("Erro ao salvar as alterações.");
-      console.error("Erro ao salvar as alterações:", error);
+    if (!selectedDisciplina) {
+      throw new Error("Nenhuma disciplina selecionada.");
     }
+
+    const payload = {
+      id: selectedDisciplina.id,
+      necessitaLaboratorio: selectedDisciplina.necessitaLaboratorio,
+      necessitaLoucaDigital: selectedDisciplina.necessitaLoucaDigital,
+      necessitaArCondicionado: selectedDisciplina.necessitaArCondicionado,
+    };
+
+    DisciplineService.updateDiscipline(selectedDisciplina.id, payload)
+      .then(() => {
+        // Atualiza a tabela localmente
+        const updatedTabela = tabela.map((row) => {
+          if (row.disciplinaId === selectedDisciplina.id) {
+            return {
+              ...row,
+              necessitaLaboratorio: selectedDisciplina.necessitaLaboratorio,
+              necessitaLoucaDigital: selectedDisciplina.necessitaLoucaDigital,
+              necessitaArCondicionado: selectedDisciplina.necessitaArCondicionado,
+            };
+          }
+          return row;
+        });
+
+        setTabela(updatedTabela);
+
+        setDialogEditOpen(false); // Fecha o modal
+      })
+      .catch((error) => {
+        alert("Erro ao salvar as alterações.");
+        console.error("Erro ao salvar as alterações:", error);
+      });
   };
 
   //atualiza a tela quando mudada preferencias da disciplina
