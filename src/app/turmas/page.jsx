@@ -1,5 +1,13 @@
 "use client";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -7,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+<<<<<<< HEAD
 import {
   Dialog,
   DialogContent,
@@ -16,15 +25,23 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+=======
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
 
-import { useState, useEffect } from "react";
-import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+<<<<<<< HEAD
 import { Eye } from "lucide-react";
 import { Pencil } from "lucide-react";
 import * as XLSX from "xlsx";
+=======
+import { DisciplineService } from "@/services/DisciplineService";
+import { RoomsService } from "@/services/RoomsService";
+import axios from "axios";
+import { Eye, Pencil } from "lucide-react";
+import { useEffect, useState } from "react";
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
 
 export default function AlocarTurmaSala() {
   const [tabela, setTabela] = useState([]);
@@ -190,15 +207,17 @@ export default function AlocarTurmaSala() {
         setLoading(false); // Desativa o estado de carregamento
       }
     };
+<<<<<<< HEAD
+=======
+
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
 
     const getSalasData = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/Sala");
-        setSalas(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.log(error);
-      }
+      RoomsService.getAllRooms()
+        .then(setSalas)
+        .catch((error) => {
+          console.log(error);
+        });
     };
 
     getSalasData();
@@ -265,6 +284,10 @@ export default function AlocarTurmaSala() {
       alert("Erro ao buscar salas disponíveis.");
     }
   };
+<<<<<<< HEAD
+=======
+
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
 
   //salva a alocação de sala disponivel da disciplina
   const handleSalvarAlocacao = async (turma) => {
@@ -288,10 +311,14 @@ export default function AlocarTurmaSala() {
           tempoSala: horario.tempoAula,
         };
 
+<<<<<<< HEAD
         await axios.post(
           "http://localhost:5000/api/Turma/alocar-turma",
           payload
         );
+=======
+        await axios.post("http://localhost:5000/api/Turma/alocar-turma", payload);
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
       }
 
       // Atualiza o estado local da tabela para refletir a mudança
@@ -329,9 +356,13 @@ export default function AlocarTurmaSala() {
       ];
 
       const alocacoesComDetalhes = alocacoes.map((alocacao) => {
+<<<<<<< HEAD
         const salaEncontrada = salas.find(
           (sala) => sala.id === alocacao.salaId
         );
+=======
+        const salaEncontrada = salas.find((sala) => sala.id === alocacao.salaId);
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
 
         return {
           diaSemana: diasDaSemana[alocacao.diaSemana] || "Dia inválido",
@@ -352,6 +383,7 @@ export default function AlocarTurmaSala() {
   };
 
   const handleGerarRelatorioFinal = async () => {
+<<<<<<< HEAD
     try {
       const response = await axios.get(
         `http://localhost:5000/api/Sala/relatorio/${diaPDF}`,
@@ -378,6 +410,30 @@ export default function AlocarTurmaSala() {
       console.log(error);
     }
   };
+=======
+    RoomsService.createFinalReportRoom(diaPDF)
+      .then((response) => {
+        // Criar um link temporário para fazer o download do arquivo
+        const blob = new Blob([response.data], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+
+        // Definir o nome do arquivo a ser baixado
+        const contentDisposition = response.headers['content-disposition'];
+        const fileName = contentDisposition
+          ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+          : 'relatorio.pdf'; // Se não houver nome no cabeçalho, usa um nome padrão
+
+        link.download = fileName;  // Define o nome do arquivo
+
+        // Simula o clique no link para iniciar o download
+        link.click();
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  }
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
 
   //mapeamento que relaciona cada dia da semana aos códigos de horário
   const dayToCodeMapping = {
@@ -391,10 +447,15 @@ export default function AlocarTurmaSala() {
   //lógica de filtragem para considerar esse mapeamento
   const filteredTable = tabela.filter((row) => {
     // Lógica de filtragem de texto
+<<<<<<< HEAD
     const matchesText = Object.values(row).some(
       (value) =>
         value &&
         value.toString().toLowerCase().includes(filterValue.toLowerCase())
+=======
+    const matchesText = Object.values(row).some((value) =>
+      value && value.toString().toLowerCase().includes(filterValue.toLowerCase())
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
     );
 
     // Lógica de filtragem com base no dia
@@ -403,16 +464,23 @@ export default function AlocarTurmaSala() {
       : true;
 
     // Lógica de filtragem com base no dia e horário
+<<<<<<< HEAD
     const matchesTime =
       filterDia && filterHora
         ? row.codigoHorario === dayToCodeMapping[filterDia]?.[filterHora - 1]
         : true;
+=======
+    const matchesTime = filterDia && filterHora
+      ? row.codigoHorario === dayToCodeMapping[filterDia]?.[filterHora - 1]
+      : true;
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
 
     return matchesText && matchesDay && matchesTime;
   });
 
   //Função para abrir o diálogo de edição
   const handleEditPreferences = async (turma) => {
+<<<<<<< HEAD
     try {
       const disciplinaId = turma.disciplinaId; // Certifique-se de que este é o campo correto
       if (!disciplinaId) {
@@ -427,10 +495,27 @@ export default function AlocarTurmaSala() {
       console.error("Erro ao buscar detalhes da disciplina:", error);
       alert("Erro ao buscar detalhes da disciplina.");
     }
+=======
+    const disciplinaId = turma.disciplinaId; // Certifique-se de que este é o campo correto
+    if (!disciplinaId) {
+      throw new Error("ID da disciplina não encontrado.");
+    }
+
+    DisciplineService.getDisciplineById(disciplinaId)
+      .then((response) => {
+        setSelectedDisciplina(response.data); // Define a disciplina selecionada no estado
+        setDialogEditOpen(true); // Abre o modal para edição
+      })
+      .catch((error) => {
+        console.error("Erro ao buscar detalhes da disciplina:", error);
+        alert("Erro ao buscar detalhes da disciplina.");
+      });
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
   };
 
   //Função para salvar as edições
   const handleSavePreferences = async () => {
+<<<<<<< HEAD
     try {
       if (!selectedDisciplina) {
         throw new Error("Nenhuma disciplina selecionada.");
@@ -468,6 +553,42 @@ export default function AlocarTurmaSala() {
       alert("Erro ao salvar as alterações.");
       console.error("Erro ao salvar as alterações:", error);
     }
+=======
+    if (!selectedDisciplina) {
+      throw new Error("Nenhuma disciplina selecionada.");
+    }
+
+    const payload = {
+      id: selectedDisciplina.id,
+      necessitaLaboratorio: selectedDisciplina.necessitaLaboratorio,
+      necessitaLoucaDigital: selectedDisciplina.necessitaLoucaDigital,
+      necessitaArCondicionado: selectedDisciplina.necessitaArCondicionado,
+    };
+
+    DisciplineService.updateDiscipline(selectedDisciplina.id, payload)
+      .then(() => {
+        // Atualiza a tabela localmente
+        const updatedTabela = tabela.map((row) => {
+          if (row.disciplinaId === selectedDisciplina.id) {
+            return {
+              ...row,
+              necessitaLaboratorio: selectedDisciplina.necessitaLaboratorio,
+              necessitaLoucaDigital: selectedDisciplina.necessitaLoucaDigital,
+              necessitaArCondicionado: selectedDisciplina.necessitaArCondicionado,
+            };
+          }
+          return row;
+        });
+
+        setTabela(updatedTabela);
+
+        setDialogEditOpen(false); // Fecha o modal
+      })
+      .catch((error) => {
+        alert("Erro ao salvar as alterações.");
+        console.error("Erro ao salvar as alterações:", error);
+      });
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
   };
 
   //atualiza a tela quando mudada preferencias da disciplina
@@ -495,13 +616,11 @@ export default function AlocarTurmaSala() {
   useEffect(() => {
     getTurmasData();
     const getSalasData = async () => {
-      try {
-        const response = await axios.get("http://localhost:5000/api/Sala");
-        setSalas(response.data);
-        console.log(response.data);
-      } catch (error) {
-        console.log(error);
-      }
+      RoomsService.getAllRooms()
+        .then(setSalas)
+        .catch((error) => {
+          console.log(error);
+        })
     };
 
     getSalasData();
@@ -509,6 +628,7 @@ export default function AlocarTurmaSala() {
 
   // Função para buscar turmas alocadas em uma sala específica
   const handleBuscarAlocacoes = async () => {
+<<<<<<< HEAD
     try {
       if (!selectedSalaId) {
         alert("Selecione um bloco e uma sala.");
@@ -537,8 +657,39 @@ export default function AlocarTurmaSala() {
     } catch (error) {
       console.error("Erro ao buscar alocações:", error);
       alert("Erro ao buscar alocações.");
+=======
+    if (!selectedSalaId) {
+      alert("Selecione um bloco e uma sala.");
+      return;
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
     }
+
+    let alocacoes = [];
+
+    RoomsService.getRoomById(selectedSalaId)
+      .then((response) => {
+        alocacoes = response.data.alocacoes;
+
+        // Tabela para organizar as alocações (3 horários x 5 dias da semana)
+        const tabela = Array(3)
+          .fill(null)
+          .map(() => Array(5).fill(null));
+
+        // Mapeie as alocações para a tabela
+        alocacoes.forEach(({ diaSemana, tempo, turmaId }) => {
+          if (diaSemana >= 1 && diaSemana <= 5 && tempo >= 1 && tempo <= 3) {
+            tabela[tempo - 1][diaSemana - 1] = turmaId || "X"; // Preenche com TurmaID ou "X" se indisponível
+          }
+        });
+
+        setAlocacoesSala(tabela);
+      })
+      .catch((error) => {
+        console.error("Erro ao buscar alocações:", error);
+        alert("Erro ao buscar alocações.");
+      });
   };
+
   const handleDeletarAlocacao = async (turmaId) => {
     try {
       const response = await axios.get(
@@ -565,6 +716,10 @@ export default function AlocarTurmaSala() {
         return row;
       });
       setTabela(updatedTabela);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
     } catch (error) {
       console.error("Erro ao tentar remover a alocação:", error);
       alert("Erro ao tentar remover a alocação.");
@@ -574,12 +729,19 @@ export default function AlocarTurmaSala() {
   const handleAlocarAutomaticamente = async () => {
     try {
       setLoading(true); // Exibe o estado de carregamento
+<<<<<<< HEAD
       const response = await axios.post(
         "http://localhost:5000/api/Turma/alocar-turmas-automaticamente"
       );
       //alert("Alocação automática realizada com sucesso!");
       //await getTurmasData(); // Atualiza a tabela
       window.location.reload(); // Recarrega a página após salvar
+=======
+      const response = await axios.post("http://localhost:5000/api/Turma/alocar-turmas-automaticamente");
+      //alert("Alocação automática realizada com sucesso!");
+      //await getTurmasData(); // Atualiza a tabela
+      window.location.reload();// Recarrega a página após salvar
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
     } catch (error) {
       console.error("Erro ao alocar turmas automaticamente:", error);
       alert("Erro ao alocar turmas automaticamente.");
@@ -604,6 +766,7 @@ export default function AlocarTurmaSala() {
 
       // Itere sobre as turmas e delete suas alocações
       for (const turma of turmas) {
+<<<<<<< HEAD
         const alocacoesResponse = await axios.get(
           `http://localhost:5000/api/Turma/${turma.id}`
         );
@@ -613,6 +776,13 @@ export default function AlocarTurmaSala() {
           await axios.delete(
             `http://localhost:5000/api/Turma/deletar-alocacao/${alocacao.id}`
           );
+=======
+        const alocacoesResponse = await axios.get(`http://localhost:5000/api/Turma/${turma.id}`);
+        const alocacoes = alocacoesResponse.data.alocacoes || [];
+
+        for (const alocacao of alocacoes) {
+          await axios.delete(`http://localhost:5000/api/Turma/deletar-alocacao/${alocacao.id}`);
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
         }
       }
 
@@ -676,6 +846,10 @@ export default function AlocarTurmaSala() {
               </div>
 
               <div className="flex items-center gap-2">
+<<<<<<< HEAD
+=======
+
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                 <Label htmlFor="dia" className="text-right">
                   Hora:
                 </Label>
@@ -693,6 +867,7 @@ export default function AlocarTurmaSala() {
                   <option value="3">3</option>
                 </select>
                 <div className="flex items-center gap-2">
+<<<<<<< HEAD
                   {/* Botão de Upload de Excel */}
                   <Dialog
                     open={uploadDialogOpen}
@@ -767,6 +942,8 @@ export default function AlocarTurmaSala() {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
+=======
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                   {/* Botão para abrir alocações */}
                   <button
                     className="rounded-md bg-blue-600 text-white p-2 min-w-[200px] h-[60px] text-center"
@@ -799,13 +976,22 @@ export default function AlocarTurmaSala() {
                     Eliminar Todas As Alocações
                   </button>
                 </div>
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
               </div>
             </div>
             <div className="border rounded-lg p-2">
               {loading ? (
+<<<<<<< HEAD
                 <p className="text-center text-gray-500">
                   Carregando dados, por favor aguarde...
                 </p>
+=======
+                <p className="text-center text-gray-500">Carregando dados, por favor aguarde...</p>
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
               ) : (
                 <Table>
                   <TableHeader>
@@ -828,6 +1014,7 @@ export default function AlocarTurmaSala() {
                       .map((row) => (
                         <TableRow key={row.id}>
                           <TableCell>{row.disciplina || "Sem Nome"}</TableCell>
+<<<<<<< HEAD
                           <TableCell>
                             {row.professor || "Não informado"}
                           </TableCell>
@@ -858,10 +1045,23 @@ export default function AlocarTurmaSala() {
                               <span className="text-green-500 font-bold">
                                 Alocado
                               </span>
+=======
+                          <TableCell>{row.professor || "Não informado"}</TableCell>
+                          <TableCell>{row.quantidadeAlunos !== undefined ? row.quantidadeAlunos : "Desconhecido"}</TableCell>
+                          <TableCell>{row.codigoHorario || "Não definido"}</TableCell>
+                          <TableCell>{row.necessitaLaboratorio ? "Sim" : "Não"}</TableCell>
+                          <TableCell>{row.necessitaLoucaDigital ? "Sim" : "Não"}</TableCell>
+                          <TableCell>{row.necessitaArCondicionado ? "Sim" : "Não"}</TableCell>
+                          <TableCell>{typeof row.salaSelecionada === "string" ? row.salaSelecionada : "Não alocada"}</TableCell>
+                          <TableCell>
+                            {row.alocada ? (
+                              <span className="text-green-500 font-bold">Alocado</span>
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                             ) : (
                               <select
                                 className="rounded-md border p-2"
                                 value={selectedSala?.id || ""}
+<<<<<<< HEAD
                                 onClick={() =>
                                   handleBuscarSalasDisponiveis(row)
                                 }
@@ -871,6 +1071,12 @@ export default function AlocarTurmaSala() {
                                   ]?.find(
                                     (sala) =>
                                       sala.id === parseInt(e.target.value)
+=======
+                                onClick={() => handleBuscarSalasDisponiveis(row)}
+                                onChange={(e) => {
+                                  const selected = salasDisponiveis[row.id]?.find(
+                                    (sala) => sala.id === parseInt(e.target.value)
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                                   );
                                   setSelectedSala(selected);
                                 }}
@@ -878,8 +1084,12 @@ export default function AlocarTurmaSala() {
                                 <option value="">Selecione uma sala</option>
                                 {salasDisponiveis[row.id]?.map((sala) => (
                                   <option key={sala.id} value={sala.id}>
+<<<<<<< HEAD
                                     Sala: Bloco {sala.bloco} - Número{" "}
                                     {sala.numero}
+=======
+                                    Sala: Bloco {sala.bloco} - Número {sala.numero}
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                                   </option>
                                 ))}
                               </select>
@@ -922,10 +1132,19 @@ export default function AlocarTurmaSala() {
                         </TableRow>
                       ))}
                   </TableBody>
+<<<<<<< HEAD
                 </Table>
               )}
             </div>
 
+=======
+
+                </Table>
+              )}
+            </div>
+
+
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
             <div className="">
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogContent asChild>
@@ -934,17 +1153,22 @@ export default function AlocarTurmaSala() {
                     <DialogDescription>
                       {selectedTurma && (
                         <>
+<<<<<<< HEAD
                           <p>
                             Tem certeza que deseja alocar a turma{" "}
                             {selectedTurma.disciplina} do professor{" "}
                             {selectedTurma.professor} na sala{" "}
                             {selectedSala.numero} bloco {selectedSala.bloco}?
                           </p>
+=======
+                          <p>Tem certeza que deseja alocar a turma {selectedTurma.disciplina} do professor {selectedTurma.professor} na sala {selectedSala.numero} bloco {selectedSala.bloco}?</p>
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                         </>
                       )}
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
+<<<<<<< HEAD
                     <Button
                       type="button"
                       variant="outline"
@@ -958,6 +1182,13 @@ export default function AlocarTurmaSala() {
                         handleAlocarTurmaSala();
                         setDialogOpen(false);
                       }}
+=======
+                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
+                    <Button type="button" onClick={() => {
+                      handleAlocarTurmaSala();
+                      setDialogOpen(false);
+                    }}
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                     >
                       Sim
                     </Button>
@@ -998,10 +1229,14 @@ export default function AlocarTurmaSala() {
                   </DialogHeader>
 
                   <DialogFooter>
+<<<<<<< HEAD
                     <Button
                       variant="outline"
                       onClick={() => setDialogOpen2(false)}
                     >
+=======
+                    <Button variant="outline" onClick={() => setDialogOpen2(false)}>
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                       Fechar
                     </Button>
                   </DialogFooter>
@@ -1038,10 +1273,14 @@ export default function AlocarTurmaSala() {
                     <Button variant="outline" onClick={() => setDialog3(false)}>
                       Fechar
                     </Button>
+<<<<<<< HEAD
                     <Button
                       variant="outline"
                       onClick={() => handleGerarRelatorioFinal()}
                     >
+=======
+                    <Button variant="outline" onClick={() => handleGerarRelatorioFinal()}>
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                       Baixar PDF
                     </Button>
                   </DialogFooter>
@@ -1050,6 +1289,7 @@ export default function AlocarTurmaSala() {
               <Dialog open={dialogEditOpen} onOpenChange={setDialogEditOpen}>
                 <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
+<<<<<<< HEAD
                     <DialogTitle className="text-xl">
                       Editar Preferências da Disciplina
                     </DialogTitle>
@@ -1065,6 +1305,17 @@ export default function AlocarTurmaSala() {
                         checked={
                           selectedDisciplina?.necessitaLaboratorio || false
                         }
+=======
+                    <DialogTitle className="text-xl">Editar Preferências da Disciplina</DialogTitle>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="lab" className="text-right">Laboratório:</Label>
+                      <Input
+                        id="lab"
+                        type="checkbox"
+                        checked={selectedDisciplina?.necessitaLaboratorio || false}
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                         onChange={(e) =>
                           setSelectedDisciplina({
                             ...selectedDisciplina,
@@ -1074,6 +1325,7 @@ export default function AlocarTurmaSala() {
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
+<<<<<<< HEAD
                       <Label htmlFor="lousa" className="text-right">
                         Lousa Digital:
                       </Label>
@@ -1083,6 +1335,13 @@ export default function AlocarTurmaSala() {
                         checked={
                           selectedDisciplina?.necessitaLoucaDigital || false
                         }
+=======
+                      <Label htmlFor="lousa" className="text-right">Lousa Digital:</Label>
+                      <Input
+                        id="lousa"
+                        type="checkbox"
+                        checked={selectedDisciplina?.necessitaLoucaDigital || false}
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                         onChange={(e) =>
                           setSelectedDisciplina({
                             ...selectedDisciplina,
@@ -1092,6 +1351,7 @@ export default function AlocarTurmaSala() {
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
+<<<<<<< HEAD
                       <Label htmlFor="ar" className="text-right">
                         Ar Condicionado:
                       </Label>
@@ -1101,6 +1361,13 @@ export default function AlocarTurmaSala() {
                         checked={
                           selectedDisciplina?.necessitaArCondicionado || false
                         }
+=======
+                      <Label htmlFor="ar" className="text-right">Ar Condicionado:</Label>
+                      <Input
+                        id="ar"
+                        type="checkbox"
+                        checked={selectedDisciplina?.necessitaArCondicionado || false}
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                         onChange={(e) =>
                           setSelectedDisciplina({
                             ...selectedDisciplina,
@@ -1111,12 +1378,16 @@ export default function AlocarTurmaSala() {
                     </div>
                   </div>
                   <DialogFooter>
+<<<<<<< HEAD
                     <Button
                       variant="outline"
                       onClick={() => setDialogEditOpen(false)}
                     >
                       Cancelar
                     </Button>
+=======
+                    <Button variant="outline" onClick={() => setDialogEditOpen(false)}>Cancelar</Button>
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                     <Button onClick={handleSavePreferences}>Salvar</Button>
                   </DialogFooter>
                 </DialogContent>
@@ -1129,9 +1400,15 @@ export default function AlocarTurmaSala() {
 
                   <div className="grid gap-4 py-4">
                     {/* Seleção de Bloco */}
+<<<<<<< HEAD
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="bloco" className="text-right">
                         Bloco
+=======
+                    <div className="flex flex-col ml-6">
+                      <Label htmlFor="bloco" className="pb-2">
+                        Bloco:
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                       </Label>
                       <select
                         id="bloco"
@@ -1149,9 +1426,15 @@ export default function AlocarTurmaSala() {
                     </div>
 
                     {/* Seleção de Sala */}
+<<<<<<< HEAD
                     <div className="grid grid-cols-4 items-center gap-4">
                       <Label htmlFor="sala" className="text-right">
                         Sala
+=======
+                    <div className="flex flex-col ml-6">
+                      <Label htmlFor="sala" className="pb-2">
+                        Sala:
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                       </Label>
                       <select
                         id="sala"
@@ -1200,9 +1483,14 @@ export default function AlocarTurmaSala() {
                             {linha.map((celula, i) => (
                               <TableCell
                                 key={i}
+<<<<<<< HEAD
                                 className={`border px-2 py-1 ${
                                   celula ? "bg-green-300" : "bg-red-300"
                                 }`}
+=======
+                                className={`border px-2 py-1 ${celula ? "bg-green-300" : "bg-red-300"
+                                  }`}
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                               >
                                 {celula || ""}
                               </TableCell>
@@ -1214,19 +1502,27 @@ export default function AlocarTurmaSala() {
                   </div>
 
                   <DialogFooter>
+<<<<<<< HEAD
                     <Button
                       variant="outline"
                       onClick={() => setDialogAlocacoes(false)}
                     >
+=======
+                    <Button variant="outline" onClick={() => setDialogAlocacoes(false)}>
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                       Fechar
                     </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+<<<<<<< HEAD
               <Dialog
                 open={isDialogDeleteAllOpen}
                 onOpenChange={setIsDialogDeleteAllOpen}
               >
+=======
+              <Dialog open={isDialogDeleteAllOpen} onOpenChange={setIsDialogDeleteAllOpen}>
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Excluir Todas as Alocações</DialogTitle>
@@ -1251,15 +1547,20 @@ export default function AlocarTurmaSala() {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+<<<<<<< HEAD
               <Dialog
                 open={isDialogAllocateOpen}
                 onOpenChange={setIsDialogAllocateOpen}
               >
+=======
+              <Dialog open={isDialogAllocateOpen} onOpenChange={setIsDialogAllocateOpen}>
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Alocar Automaticamente</DialogTitle>
                   </DialogHeader>
                   <p>
+<<<<<<< HEAD
                     Tem certeza que deseja <b>alocar automaticamente</b> todas
                     as turmas em salas disponíveis? Essa ação tentará alocar
                     turmas automaticamente com base nas regras definidas.
@@ -1275,6 +1576,16 @@ export default function AlocarTurmaSala() {
                       variant="default"
                       onClick={handleAlocarAutomaticamente}
                     >
+=======
+                    Tem certeza que deseja <b>alocar automaticamente</b> todas as turmas em salas disponíveis?
+                    Essa ação tentará alocar turmas automaticamente com base nas regras definidas.
+                  </p>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsDialogAllocateOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button variant="default" onClick={handleAlocarAutomaticamente}>
+>>>>>>> 38ef3307be0a489c0fc296d4d9bf43c38f1e78ef
                       Confirmar Alocação
                     </Button>
                   </DialogFooter>
