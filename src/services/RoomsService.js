@@ -19,19 +19,19 @@ export class RoomsService {
     return response;
   }
 
-  static async editRoom(id, payload) {
+  static async updateRoom(id, payload) {
     const response = await httpClient.put(`/sala/${id}`, payload);
 
     return response;
   }
 
-  static async unavailableRoom(id, payload) {
+  static async postUnavailableRoom(id, payload) {
     const response = await httpClient.post(`/sala/${id}/indisponibilidade`, payload);
 
     return response;
   }
 
-  static async removeUnavailableRoom(idRoom, idUnavailable) {
+  static async deleteUnavailableRoom(idRoom, idUnavailable) {
     const response = await httpClient.delete(`/sala/${idRoom}/indisponibilidade/${idUnavailable}`);
 
     return response;

@@ -19,9 +19,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ClassService } from "@/services/ClassService";
 import { DisciplineService } from "@/services/DisciplineService";
 import { RoomsService } from "@/services/RoomsService";
-import axios from "axios";
 import { Eye, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -98,48 +98,51 @@ export default function AlocarTurmaSala() {
 
   useEffect(() => {
     const getTurmasData = async () => {
-      try {
-        setLoading(true); // Ativa o estado de carregamento
-        const response = await axios.get("http://localhost:5000/api/Turma");
-        const turmas = response.data;
+      setLoading(true); // Ativa o estado de carregamento
 
-        // Buscar alocações para cada turma
-        const turmasComAlocacoes = await Promise.all(
-          turmas.map(async (turma) => {
-            const alocacoesResponse = await axios.get(`http://localhost:5000/api/Turma/${turma.id}`);
-            const alocacoes = alocacoesResponse.data.alocacoes || [];
-            const alocacaoAtual = alocacoes[0]; // Considera a primeira alocação, se existir
+      ClassService.getAllClasses()
+        .then((response) => {
+          const turmas = response.data;
 
-            return {
-              ...turma,
-              alocada: !!alocacaoAtual,
-              salaSelecionada: alocacaoAtual ? alocacaoAtual.salaId : null,
-            };
-          })
-        );
+          const turmasComAlocacoes = Promise.all(
+            turmas.map(async (turma) => {
+              ClassService.getClassById(turma.id)
+                .then((alocacoesResponse) => {
+                  const alocacoes = alocacoesResponse.data.alocacoes || [];
+                  const alocacaoAtual = alocacoes[0]; // Considera a primeira alocação, se existir
 
-        const mapResponse = turmasComAlocacoes.map((turma) => ({
-          id: turma.id,
-          professor: turma.professor || "Não informado",
-          disciplina: turma.disciplina?.nome || "Sem Nome",
-          quantidadeAlunos: turma.quantidadeAlunos || 0,
-          codigoHorario: turma.codigoHorario || 0,
-          necessitaLaboratorio: turma.disciplina?.necessitaLaboratorio || false,
-          necessitaArCondicionado: turma.disciplina?.necessitaArCondicionado || false,
-          necessitaLoucaDigital: turma.disciplina?.necessitaLoucaDigital || false,
-          disciplinaId: turma.disciplina?.id || 0,
-          alocada: turma.alocada || false,
-          salaSelecionada: turma.salaSelecionada || null,
-        }));
+                  return {
+                    ...turma,
+                    alocada: !!alocacaoAtual,
+                    salaSelecionada: alocacaoAtual ? alocacaoAtual.salaId : null,
+                  };
+                });
+            })
+          )
 
-        setTabela(mapResponse); // Atualiza os dados da tabela
-      } catch (error) {
-        console.error("Erro ao carregar turmas:", error);
-      } finally {
-        setLoading(false); // Desativa o estado de carregamento
-      }
+          const mapResponse = turmasComAlocacoes.map((turma) => ({
+            id: turma.id,
+            professor: turma.professor || "Não informado",
+            disciplina: turma.disciplina?.nome || "Sem Nome",
+            quantidadeAlunos: turma.quantidadeAlunos || 0,
+            codigoHorario: turma.codigoHorario || 0,
+            necessitaLaboratorio: turma.disciplina?.necessitaLaboratorio || false,
+            necessitaArCondicionado: turma.disciplina?.necessitaArCondicionado || false,
+            necessitaLoucaDigital: turma.disciplina?.necessitaLoucaDigital || false,
+            disciplinaId: turma.disciplina?.id || 0,
+            alocada: turma.alocada || false,
+            salaSelecionada: turma.salaSelecionada || null,
+          }));
+
+          setTabela(mapResponse); // Atualiza os dados da tabela
+        })
+        .catch((error) => {
+          console.error("Erro ao carregar turmas:", error);
+        })
+        .finally(() => {
+          setLoading(false); // Desativa o estado de carregamento
+        });
     };
-
 
     const getSalasData = async () => {
       RoomsService.getAllRooms()
@@ -154,19 +157,21 @@ export default function AlocarTurmaSala() {
   }, []);
 
   const handleAlocarTurmaSala = async () => {
-    try {
-      const turma = {
-        turmaId: selectedTurma.id,
-        salaId: selectedSala.id,
-        diaSemana: parseInt(filterDia),
-        tempoSala: parseInt(filterHora),
-      }
-      const response = await axios.post("http://localhost:5000/api/Turma/alocar-turma", turma);
-      setDialogOpen(false);
-      console.log(response.data);
-    } catch (error) {
-      console.log(error);
+    const turma = {
+      turmaId: selectedTurma.id,
+      salaId: selectedSala.id,
+      diaSemana: parseInt(filterDia),
+      tempoSala: parseInt(filterHora),
     }
+
+    ClassService.allocateClass(turma)
+      .then((response) => {
+        setDialogOpen(false);
+        console.log(response.data);
+      })
+      .catch((error) => {
+        console.log(error);
+      })
   }
 
   //Busca salas disponíveis para determinada disciplina
@@ -180,13 +185,8 @@ export default function AlocarTurmaSala() {
 
       const salasDisponiveisPorHorario = await Promise.all(
         horarios.map(async (horario) => {
-          const response = await axios.get("http://localhost:5000/api/Turma/obter-salas-disponiveis", {
-            params: {
-              TurmaId: turma.id,
-              DiaSemana: horario.diaSemana,
-              TempoAula: horario.tempoAula,
-            },
-          });
+          const response = await ClassService.getAllAvailableRooms(turma.id, horario.diaSemana, horario.tempoAula);
+
           return response.data || [];
         })
       );
@@ -231,7 +231,7 @@ export default function AlocarTurmaSala() {
           tempoSala: horario.tempoAula,
         };
 
-        await axios.post("http://localhost:5000/api/Turma/alocar-turma", payload);
+        await ClassService.allocateClass(payload);
       }
 
       // Atualiza o estado local da tabela para refletir a mudança
@@ -255,7 +255,7 @@ export default function AlocarTurmaSala() {
 
   const handleAlocacoesTurma = async (id) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/Turma/${id}`);
+      const response = await ClassService.getClassById(id);
       const alocacoes = response.data.alocacoes || [];
 
       const diasDaSemana = [
@@ -401,7 +401,7 @@ export default function AlocarTurmaSala() {
   //atualiza a tela quando mudada preferencias da disciplina
   const getTurmasData = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/Turma");
+      const response = await ClassService.getAllClasses();
       const mapResponse = response.data.map((turma) => ({
         id: turma.id,
         professor: turma.professor,
@@ -468,7 +468,7 @@ export default function AlocarTurmaSala() {
 
   const handleDeletarAlocacao = async (turmaId) => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/Turma/${turmaId}`);
+      const response = await ClassService.getClassById(turmaId);
       const alocacoes = response.data.alocacoes || [];
 
       if (alocacoes.length === 0) {
@@ -477,7 +477,7 @@ export default function AlocarTurmaSala() {
       }
 
       for (const alocacao of alocacoes) {
-        await axios.delete(`http://localhost:5000/api/Turma/deletar-alocacao/${alocacao.id}`);
+        await ClassService.deallocateClass(alocacao.id);
       }
 
       // Atualiza a tabela localmente
@@ -498,7 +498,7 @@ export default function AlocarTurmaSala() {
   const handleAlocarAutomaticamente = async () => {
     try {
       setLoading(true); // Exibe o estado de carregamento
-      const response = await axios.post("http://localhost:5000/api/Turma/alocar-turmas-automaticamente");
+      const response = await ClassService.allocateClassAutomatically();
       //alert("Alocação automática realizada com sucesso!");
       //await getTurmasData(); // Atualiza a tabela
       window.location.reload();// Recarrega a página após salvar
@@ -516,7 +516,7 @@ export default function AlocarTurmaSala() {
       setLoading(true); // Exibe o estado de carregamento
 
       // Busque todas as turmas para obter as alocações
-      const response = await axios.get("http://localhost:5000/api/Turma");
+      const response = await ClassService.getAllClasses();
       const turmas = response.data;
 
       if (!turmas || turmas.length === 0) {
@@ -526,11 +526,11 @@ export default function AlocarTurmaSala() {
 
       // Itere sobre as turmas e delete suas alocações
       for (const turma of turmas) {
-        const alocacoesResponse = await axios.get(`http://localhost:5000/api/Turma/${turma.id}`);
+        const alocacoesResponse = await ClassService.getClassById(turma.id);
         const alocacoes = alocacoesResponse.data.alocacoes || [];
 
         for (const alocacao of alocacoes) {
-          await axios.delete(`http://localhost:5000/api/Turma/deletar-alocacao/${alocacao.id}`);
+          await ClassService.deallocateClass(alocacao.id);
         }
       }
 

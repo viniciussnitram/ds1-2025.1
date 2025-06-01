@@ -1,9 +1,5 @@
 "use client";
-import { useState } from "react";
-import axios from "axios";
-import * as XLSX from 'xlsx';
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -20,7 +17,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
+import { ClassService } from "@/services/ClassService";
+import { useState } from "react";
+import * as XLSX from 'xlsx';
 
 export default function Home() {
   const [tabela, setTabela] = useState();
@@ -60,31 +60,32 @@ export default function Home() {
   }
 
   const handleUploadExcel = async () => {
-    try {
-      if (!selectedFile) {
-        alert("Por favor, selecione um arquivo.");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      const response = await axios.post("http://localhost:5000/api/Turma/importar-excel-turmas", formData);
-      console.log(response.data);
-      setTabelaOriginal([]);
-      setTabela([]);
-      setDialogOpen(false);
-    } catch (error) {
-      console.error("Erro ao enviar o arquivo:", error);
+    if (!selectedFile) {
+      alert("Por favor, selecione um arquivo.");
+      return;
     }
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    ClassService.createReportClass(formData)
+      .then(() => {
+        console.log(response.data);
+        setTabelaOriginal([]);
+        setTabela([]);
+        setDialogOpen(false);
+      })
+      .catch((error) => {
+        console.error("Erro ao enviar o arquivo:", error);
+      });
   };
 
   const handleEncerrarPeriodo = async () => {
-    try {
-      const response = await axios.post("http://localhost:5000/api/Turma/limpar-semestre");
-      setDialogOpen2(false);
-    } catch (error) {
-      console.error(error);
-    }
+    ClassService.clearSemester()
+      .then(() => setDialogOpen2(false))
+      .catch((error) => {
+        console.error(error)
+      });
   }
 
   return (
@@ -114,7 +115,7 @@ export default function Home() {
                 <DialogTitle>Encerrar Período Letivo</DialogTitle>
                 <DialogDescription>Tem certeza que deseja encerrar o período letivo?</DialogDescription>
               </DialogHeader>
-    
+
               <form>
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setDialogOpen2(false)}>Cancelar</Button>

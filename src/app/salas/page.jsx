@@ -104,7 +104,7 @@ export default function CadastrarSala() {
       tempo: parseInt(selectedHorario),
     };
 
-    RoomsService.unavailableRoom(selectedSalaId, indisponibilidade)
+    RoomsService.postUnavailableRoom(selectedSalaId, indisponibilidade)
       .then(() => alert("Indisponibilidade adicionada com sucesso."))
       .catch((error) => {
         alert("Erro ao adicionar indisponibilidade.");
@@ -136,14 +136,14 @@ export default function CadastrarSala() {
 
   // Atualizar os dados da sala
   const handleUpdateSala = async () => {
-    RoomsService.editRoom(editSala.id, editSala)
+    RoomsService.updateRoom(editSala.id, editSala)
       .then(() => {
         setTabela((prev) => prev.map((s) => (s.id === editSala.id ? editSala : s)));
       })
       .catch((error) => {
         console.error("Erro ao atualizar a sala:", error);
       })
-      .finally(() => setIsDialogEditOpen(false))
+      .finally(() => setIsDialogEditOpen(false));
   };
 
   const handleDeleteSala = async () => {
@@ -161,7 +161,7 @@ export default function CadastrarSala() {
 
         // 2. Deletar cada indisponibilidade individualmente
         for (const indisponibilidade of indisponibilidades) {
-          RoomsService.removeUnavailableRoom(selectedSalaId, indisponibilidade.id)
+          RoomsService.deleteUnavailableRoom(selectedSalaId, indisponibilidade.id)
         }
 
         // 3. Atualizar a tabela de indisponibilidades e fechar o modal
