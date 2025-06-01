@@ -91,10 +91,7 @@ export default function AlocarTurmaSala() {
 
       const formData = new FormData();
       formData.append("file", selectedFile);
-      const response = await axios.post(
-        "http://localhost:5000/api/Turma/importar-excel-turmas",
-        formData
-      );
+      const response = await ClassService.createReportClass(formData);
       console.log(response.data);
       setUploadDialogOpen(false);
       getTurmasData(); // Atualiza a tabela após upload
@@ -106,11 +103,11 @@ export default function AlocarTurmaSala() {
   //Função para encerrar período
   const handleEncerrarPeriodo = async () => {
     try {
-      await axios.post("http://localhost:5000/api/Turma/limpar-semestre");
+      ClassService.clearSemester();
       alert("Período letivo encerrado com sucesso!");
       getTurmasData(); // Atualiza a tabela após encerramento
     } catch (error) {
-      console.error(error);
+      console.log('Erro ao encerrar período letivo.', error);
     }
   };
 
@@ -198,7 +195,7 @@ export default function AlocarTurmaSala() {
       RoomsService.getAllRooms()
         .then(setSalas)
         .catch((error) => {
-          console.log(error);
+          console.log('Erro ao requisitar todas as salas.', error);
         });
     };
 
@@ -220,7 +217,7 @@ export default function AlocarTurmaSala() {
         console.log(response.data);
       })
       .catch((error) => {
-        console.log(error);
+        console.log('Erro ao alocar turma.', error);
       })
   }
 
@@ -360,7 +357,7 @@ export default function AlocarTurmaSala() {
         link.click();
       })
       .catch((error) => {
-        console.log(error);
+        console.log('Erro ao criar relatório.', error);
       });
   };
 
@@ -471,7 +468,7 @@ export default function AlocarTurmaSala() {
       }));
       setTabela(mapResponse);
     } catch (error) {
-      console.log(error);
+      console.log('Erro ao solicitar todas as salas.', error);
     }
   };
   // Chame getTurmasData no useEffect apenas uma vez
@@ -481,7 +478,7 @@ export default function AlocarTurmaSala() {
       RoomsService.getAllRooms()
         .then(setSalas)
         .catch((error) => {
-          console.log(error);
+          console.log('Erro ao solicitar todas as salas.', error);
         });
     };
 

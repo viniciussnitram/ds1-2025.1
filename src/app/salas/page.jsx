@@ -57,7 +57,7 @@ export default function CadastrarSala() {
     RoomsService.getAllRooms()
       .then(setTabela)
       .catch((error) => {
-        console.log(error);
+        console.log('Não foi possível requisitar todas as salas', error);
       });
   }, []);
 

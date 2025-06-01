@@ -84,7 +84,7 @@ export default function Home() {
     ClassService.clearSemester()
       .then(() => setDialogOpen2(false))
       .catch((error) => {
-        console.error(error)
+        console.error('Não foi possível limpar o semestre.', error);
       });
   }
 
