@@ -62,6 +62,57 @@ export default function AlocarTurmaSala() {
   const [isDialogDeleteAllOpen, setIsDialogDeleteAllOpen] = useState(false);
   const [isDialogAllocateOpen, setIsDialogAllocateOpen] = useState(false);
 
+  // Estados para o modal de upload
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [dialogImportarExcel, setDialogImportarExcel] = useState(false);
+  const [dialogEncerrarPeriodo, setDialogEncerrarPeriodo] = useState(false);
+  // Função para abrir o modal de upload
+  const handleFileUpload = (e) => {
+    setSelectedFile(e.target.files[0]);
+
+    const reader = new FileReader();
+    reader.readAsBinaryString(e.target.files[0]);
+    reader.onload = (e) => {
+      const data = e.target.result;
+      const workbook = XLSX.read(data, { type: "binary" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const parsedData = XLSX.utils.sheet_to_json(sheet);
+      console.log("Dados do Excel:", parsedData);
+    };
+  };
+  const handleUploadExcel = async () => {
+    try {
+      if (!selectedFile) {
+        alert("Por favor, selecione um arquivo.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      const response = await axios.post(
+        "http://localhost:5000/api/Turma/importar-excel-turmas",
+        formData
+      );
+      console.log(response.data);
+      setUploadDialogOpen(false);
+      getTurmasData(); // Atualiza a tabela após upload
+    } catch (error) {
+      console.error("Erro ao enviar o arquivo:", error);
+    }
+  };
+
+  //Função para encerrar período
+  const handleEncerrarPeriodo = async () => {
+    try {
+      await axios.post("http://localhost:5000/api/Turma/limpar-semestre");
+      alert("Período letivo encerrado com sucesso!");
+      getTurmasData(); // Atualiza a tabela após encerramento
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   //Atualiza tabela
   const [loading, setLoading] = useState(false);
@@ -73,7 +124,7 @@ export default function AlocarTurmaSala() {
       { diaSemana: 2, tempoAula: 2 },
     ],
     2: [
-      { diaSemana: 1, tempoAula: 2 },//mudar tempo de aula de 2 para 3 quando ajeitado o banco
+      { diaSemana: 1, tempoAula: 2 }, //mudar tempo de aula de 2 para 3 quando ajeitado o banco
       { diaSemana: 2, tempoAula: 1 },
     ],
     3: [
@@ -94,7 +145,6 @@ export default function AlocarTurmaSala() {
       { diaSemana: 5, tempoAula: 1 },
     ],
   };
-
 
   useEffect(() => {
     const getTurmasData = async () => {
@@ -208,7 +258,6 @@ export default function AlocarTurmaSala() {
     }
   };
 
-
   //salva a alocação de sala disponivel da disciplina
   const handleSalvarAlocacao = async (turma) => {
     try {
@@ -259,17 +308,19 @@ export default function AlocarTurmaSala() {
       const alocacoes = response.data.alocacoes || [];
 
       const diasDaSemana = [
-        "Domingo",        // 0
-        "Segunda-feira",  // 1
-        "Terça-feira",    // 2
-        "Quarta-feira",   // 3
-        "Quinta-feira",   // 4
-        "Sexta-feira",    // 5
-        "Sábado",         // 6
+        "Domingo", // 0
+        "Segunda-feira", // 1
+        "Terça-feira", // 2
+        "Quarta-feira", // 3
+        "Quinta-feira", // 4
+        "Sexta-feira", // 5
+        "Sábado", // 6
       ];
 
       const alocacoesComDetalhes = alocacoes.map((alocacao) => {
-        const salaEncontrada = salas.find((sala) => sala.id === alocacao.salaId);
+        const salaEncontrada = salas.find(
+          (sala) => sala.id === alocacao.salaId
+        );
 
         return {
           diaSemana: diasDaSemana[alocacao.diaSemana] || "Dia inválido",
@@ -293,17 +344,17 @@ export default function AlocarTurmaSala() {
     RoomsService.createFinalReportRoom(diaPDF)
       .then((response) => {
         // Criar um link temporário para fazer o download do arquivo
-        const blob = new Blob([response.data], { type: 'application/pdf' });
-        const link = document.createElement('a');
+        const blob = new Blob([response.data], { type: "application/pdf" });
+        const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
 
         // Definir o nome do arquivo a ser baixado
-        const contentDisposition = response.headers['content-disposition'];
+        const contentDisposition = response.headers["content-disposition"];
         const fileName = contentDisposition
-          ? contentDisposition.split('filename=')[1].replace(/"/g, '')
-          : 'relatorio.pdf'; // Se não houver nome no cabeçalho, usa um nome padrão
+          ? contentDisposition.split("filename=")[1].replace(/"/g, "")
+          : "relatorio.pdf"; // Se não houver nome no cabeçalho, usa um nome padrão
 
-        link.download = fileName;  // Define o nome do arquivo
+        link.download = fileName; // Define o nome do arquivo
 
         // Simula o clique no link para iniciar o download
         link.click();
@@ -311,7 +362,7 @@ export default function AlocarTurmaSala() {
       .catch((error) => {
         console.log(error);
       });
-  }
+  };
 
   //mapeamento que relaciona cada dia da semana aos códigos de horário
   const dayToCodeMapping = {
@@ -325,8 +376,10 @@ export default function AlocarTurmaSala() {
   //lógica de filtragem para considerar esse mapeamento
   const filteredTable = tabela.filter((row) => {
     // Lógica de filtragem de texto
-    const matchesText = Object.values(row).some((value) =>
-      value && value.toString().toLowerCase().includes(filterValue.toLowerCase())
+    const matchesText = Object.values(row).some(
+      (value) =>
+        value &&
+        value.toString().toLowerCase().includes(filterValue.toLowerCase())
     );
 
     // Lógica de filtragem com base no dia
@@ -335,9 +388,10 @@ export default function AlocarTurmaSala() {
       : true;
 
     // Lógica de filtragem com base no dia e horário
-    const matchesTime = filterDia && filterHora
-      ? row.codigoHorario === dayToCodeMapping[filterDia]?.[filterHora - 1]
-      : true;
+    const matchesTime =
+      filterDia && filterHora
+        ? row.codigoHorario === dayToCodeMapping[filterDia]?.[filterHora - 1]
+        : true;
 
     return matchesText && matchesDay && matchesTime;
   });
@@ -382,7 +436,8 @@ export default function AlocarTurmaSala() {
               ...row,
               necessitaLaboratorio: selectedDisciplina.necessitaLaboratorio,
               necessitaLoucaDigital: selectedDisciplina.necessitaLoucaDigital,
-              necessitaArCondicionado: selectedDisciplina.necessitaArCondicionado,
+              necessitaArCondicionado:
+                selectedDisciplina.necessitaArCondicionado,
             };
           }
           return row;
@@ -427,7 +482,7 @@ export default function AlocarTurmaSala() {
         .then(setSalas)
         .catch((error) => {
           console.log(error);
-        })
+        });
     };
 
     getSalasData();
@@ -488,7 +543,6 @@ export default function AlocarTurmaSala() {
         return row;
       });
       setTabela(updatedTabela);
-
     } catch (error) {
       console.error("Erro ao tentar remover a alocação:", error);
       alert("Erro ao tentar remover a alocação.");
@@ -501,7 +555,7 @@ export default function AlocarTurmaSala() {
       const response = await ClassService.allocateClassAutomatically();
       //alert("Alocação automática realizada com sucesso!");
       //await getTurmasData(); // Atualiza a tabela
-      window.location.reload();// Recarrega a página após salvar
+      window.location.reload(); // Recarrega a página após salvar
     } catch (error) {
       console.error("Erro ao alocar turmas automaticamente:", error);
       alert("Erro ao alocar turmas automaticamente.");
@@ -554,7 +608,9 @@ export default function AlocarTurmaSala() {
     <main className="mb-20">
       {loading ? (
         <div className="flex items-center justify-center h-full">
-          <p className="text-lg text-gray-500">Carregando, por favor aguarde...</p>
+          <p className="text-lg text-gray-500">
+            Carregando, por favor aguarde...
+          </p>
         </div>
       ) : (
         <>
@@ -578,11 +634,11 @@ export default function AlocarTurmaSala() {
                   Dia da Semana:
                 </Label>
                 <select
-                  className="rounded-md border p-2 col-span-3"
+                  className="rounded-md border p-2 col-span-3 w-[150px]"
                   value={filterDia}
                   onChange={(e) => setFilterDia(e.target.value)}
                 >
-                  <option value="">Escolha uma opçao</option>
+                  <option value="">Selecione uma opção</option>
                   <option value="1">Segunda-Feira</option>
                   <option value="2">Terça-Feira</option>
                   <option value="3">Quarta-Feira</option>
@@ -592,24 +648,32 @@ export default function AlocarTurmaSala() {
               </div>
 
               <div className="flex items-center gap-2">
-
                 <Label htmlFor="dia" className="text-right">
                   Hora:
                 </Label>
                 <select
-                  className="rounded-md border p-2 col-span-3"
+                  className="rounded-md border p-2 col-span-3 w-[150px]"
                   value={filterHora}
                   onChange={(e) => {
                     const value = e.target.value;
                     setFilterHora(value ? parseInt(value) : 0); // Define o horário ou reseta para 0
                   }}
                 >
-                  <option>Selecione uma Opção</option>
+                  <option>Selecione uma opção</option>
                   <option value="1">1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>
                 </select>
                 <div className="flex items-center gap-2">
+                  {/* Botão para importar Excel */}
+                  <button
+                    className="rounded-md bg-blue-600 text-white p-2 min-w-[200px] h-[60px] text-center"
+                    onClick={() => setDialogImportarExcel(true)}
+                  >
+                    Importar Turmas (Excel)
+                  </button>
+
+
                   {/* Botão para abrir alocações */}
                   <button
                     className="rounded-md bg-blue-600 text-white p-2 min-w-[200px] h-[60px] text-center"
@@ -641,14 +705,21 @@ export default function AlocarTurmaSala() {
                   >
                     Eliminar Todas As Alocações
                   </button>
+                  {/* Botão para encerrar período */}
+                  <button
+                    className="rounded-md bg-red-600 text-white p-2 min-w-[200px] h-[60px] text-center"
+                    onClick={() => setDialogEncerrarPeriodo(true)}
+                  >
+                    Encerrar Período Letivo
+                  </button>
                 </div>
-
-
               </div>
             </div>
             <div className="border rounded-lg p-2">
               {loading ? (
-                <p className="text-center text-gray-500">Carregando dados, por favor aguarde...</p>
+                <p className="text-center text-gray-500">
+                  Carregando dados, por favor aguarde...
+                </p>
               ) : (
                 <Table>
                   <TableHeader>
@@ -671,24 +742,49 @@ export default function AlocarTurmaSala() {
                       .map((row) => (
                         <TableRow key={row.id}>
                           <TableCell>{row.disciplina || "Sem Nome"}</TableCell>
-                          <TableCell>{row.professor || "Não informado"}</TableCell>
-                          <TableCell>{row.quantidadeAlunos !== undefined ? row.quantidadeAlunos : "Desconhecido"}</TableCell>
-                          <TableCell>{row.codigoHorario || "Não definido"}</TableCell>
-                          <TableCell>{row.necessitaLaboratorio ? "Sim" : "Não"}</TableCell>
-                          <TableCell>{row.necessitaLoucaDigital ? "Sim" : "Não"}</TableCell>
-                          <TableCell>{row.necessitaArCondicionado ? "Sim" : "Não"}</TableCell>
-                          <TableCell>{typeof row.salaSelecionada === "string" ? row.salaSelecionada : "Não alocada"}</TableCell>
+                          <TableCell>
+                            {row.professor || "Não informado"}
+                          </TableCell>
+                          <TableCell>
+                            {row.quantidadeAlunos !== undefined
+                              ? row.quantidadeAlunos
+                              : "Desconhecido"}
+                          </TableCell>
+                          <TableCell>
+                            {row.codigoHorario || "Não definido"}
+                          </TableCell>
+                          <TableCell>
+                            {row.necessitaLaboratorio ? "Sim" : "Não"}
+                          </TableCell>
+                          <TableCell>
+                            {row.necessitaLoucaDigital ? "Sim" : "Não"}
+                          </TableCell>
+                          <TableCell>
+                            {row.necessitaArCondicionado ? "Sim" : "Não"}
+                          </TableCell>
+                          <TableCell>
+                            {typeof row.salaSelecionada === "string"
+                              ? row.salaSelecionada
+                              : "Não alocada"}
+                          </TableCell>
                           <TableCell>
                             {row.alocada ? (
-                              <span className="text-green-500 font-bold">Alocado</span>
+                              <span className="text-green-500 font-bold">
+                                Alocado
+                              </span>
                             ) : (
                               <select
                                 className="rounded-md border p-2"
                                 value={selectedSala?.id || ""}
-                                onClick={() => handleBuscarSalasDisponiveis(row)}
+                                onClick={() =>
+                                  handleBuscarSalasDisponiveis(row)
+                                }
                                 onChange={(e) => {
-                                  const selected = salasDisponiveis[row.id]?.find(
-                                    (sala) => sala.id === parseInt(e.target.value)
+                                  const selected = salasDisponiveis[
+                                    row.id
+                                  ]?.find(
+                                    (sala) =>
+                                      sala.id === parseInt(e.target.value)
                                   );
                                   setSelectedSala(selected);
                                 }}
@@ -696,7 +792,8 @@ export default function AlocarTurmaSala() {
                                 <option value="">Selecione uma sala</option>
                                 {salasDisponiveis[row.id]?.map((sala) => (
                                   <option key={sala.id} value={sala.id}>
-                                    Sala: Bloco {sala.bloco} - Número {sala.numero}
+                                    Sala: Bloco {sala.bloco} - Número{" "}
+                                    {sala.numero}
                                   </option>
                                 ))}
                               </select>
@@ -739,11 +836,9 @@ export default function AlocarTurmaSala() {
                         </TableRow>
                       ))}
                   </TableBody>
-
                 </Table>
               )}
             </div>
-
 
             <div className="">
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -753,17 +848,30 @@ export default function AlocarTurmaSala() {
                     <DialogDescription>
                       {selectedTurma && (
                         <>
-                          <p>Tem certeza que deseja alocar a turma {selectedTurma.disciplina} do professor {selectedTurma.professor} na sala {selectedSala.numero} bloco {selectedSala.bloco}?</p>
+                          <p>
+                            Tem certeza que deseja alocar a turma{" "}
+                            {selectedTurma.disciplina} do professor{" "}
+                            {selectedTurma.professor} na sala{" "}
+                            {selectedSala.numero} bloco {selectedSala.bloco}?
+                          </p>
                         </>
                       )}
                     </DialogDescription>
                   </DialogHeader>
                   <DialogFooter>
-                    <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>Cancelar</Button>
-                    <Button type="button" onClick={() => {
-                      handleAlocarTurmaSala();
-                      setDialogOpen(false);
-                    }}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setDialogOpen(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        handleAlocarTurmaSala();
+                        setDialogOpen(false);
+                      }}
                     >
                       Sim
                     </Button>
@@ -804,7 +912,10 @@ export default function AlocarTurmaSala() {
                   </DialogHeader>
 
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setDialogOpen2(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setDialogOpen2(false)}
+                    >
                       Fechar
                     </Button>
                   </DialogFooter>
@@ -841,7 +952,10 @@ export default function AlocarTurmaSala() {
                     <Button variant="outline" onClick={() => setDialog3(false)}>
                       Fechar
                     </Button>
-                    <Button variant="outline" onClick={() => handleGerarRelatorioFinal()}>
+                    <Button
+                      variant="outline"
+                      onClick={() => handleGerarRelatorioFinal()}
+                    >
                       Baixar PDF
                     </Button>
                   </DialogFooter>
@@ -850,15 +964,21 @@ export default function AlocarTurmaSala() {
               <Dialog open={dialogEditOpen} onOpenChange={setDialogEditOpen}>
                 <DialogContent className="sm:max-w-[600px]">
                   <DialogHeader>
-                    <DialogTitle className="text-xl">Editar Preferências da Disciplina</DialogTitle>
+                    <DialogTitle className="text-xl">
+                      Editar Preferências da Disciplina
+                    </DialogTitle>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="lab" className="text-right">Laboratório:</Label>
+                      <Label htmlFor="lab" className="text-right">
+                        Laboratório:
+                      </Label>
                       <Input
                         id="lab"
                         type="checkbox"
-                        checked={selectedDisciplina?.necessitaLaboratorio || false}
+                        checked={
+                          selectedDisciplina?.necessitaLaboratorio || false
+                        }
                         onChange={(e) =>
                           setSelectedDisciplina({
                             ...selectedDisciplina,
@@ -868,11 +988,15 @@ export default function AlocarTurmaSala() {
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="lousa" className="text-right">Lousa Digital:</Label>
+                      <Label htmlFor="lousa" className="text-right">
+                        Lousa Digital:
+                      </Label>
                       <Input
                         id="lousa"
                         type="checkbox"
-                        checked={selectedDisciplina?.necessitaLoucaDigital || false}
+                        checked={
+                          selectedDisciplina?.necessitaLoucaDigital || false
+                        }
                         onChange={(e) =>
                           setSelectedDisciplina({
                             ...selectedDisciplina,
@@ -882,11 +1006,15 @@ export default function AlocarTurmaSala() {
                       />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="ar" className="text-right">Ar Condicionado:</Label>
+                      <Label htmlFor="ar" className="text-right">
+                        Ar Condicionado:
+                      </Label>
                       <Input
                         id="ar"
                         type="checkbox"
-                        checked={selectedDisciplina?.necessitaArCondicionado || false}
+                        checked={
+                          selectedDisciplina?.necessitaArCondicionado || false
+                        }
                         onChange={(e) =>
                           setSelectedDisciplina({
                             ...selectedDisciplina,
@@ -897,8 +1025,79 @@ export default function AlocarTurmaSala() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setDialogEditOpen(false)}>Cancelar</Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setDialogEditOpen(false)}
+                    >
+                      Cancelar
+                    </Button>
                     <Button onClick={handleSavePreferences}>Salvar</Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog
+                open={dialogImportarExcel}
+                onOpenChange={setDialogImportarExcel}
+              >
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Importar Turmas</DialogTitle>
+                    <DialogDescription>
+                      Selecione o arquivo Excel com os dados das turmas
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <input
+                      type="file"
+                      accept=".xlsx, .xls"
+                      onChange={handleFileUpload}
+                      className="border p-2 rounded"
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setDialogImportarExcel(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={handleUploadExcel}
+                      disabled={!selectedFile}
+                    >
+                      Confirmar Importação
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+
+              {/* Diálogo para Encerrar Período */}
+              <Dialog
+                open={dialogEncerrarPeriodo}
+                onOpenChange={setDialogEncerrarPeriodo}
+              >
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Encerrar Período Letivo</DialogTitle>
+                    <DialogDescription>
+                      Tem certeza que deseja encerrar o período letivo? Esta
+                      ação não pode ser desfeita.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => setDialogEncerrarPeriodo(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={handleEncerrarPeriodo}
+                    >
+                      Confirmar
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -994,44 +1193,69 @@ export default function AlocarTurmaSala() {
                   </div>
 
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setDialogAlocacoes(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setDialogAlocacoes(false)}
+                    >
                       Fechar
                     </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-              <Dialog open={isDialogDeleteAllOpen} onOpenChange={setIsDialogDeleteAllOpen}>
+
+              <Dialog
+                open={isDialogDeleteAllOpen}
+                onOpenChange={setIsDialogDeleteAllOpen}
+              >
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Excluir Todas as Alocações</DialogTitle>
                   </DialogHeader>
                   <p>
-                    Tem certeza que deseja excluir <b>todas as alocações</b>? Esta ação não poderá ser desfeita.
+                    Tem certeza que deseja excluir <b>todas as alocações</b>?
+                    Esta ação não poderá ser desfeita.
                   </p>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsDialogDeleteAllOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsDialogDeleteAllOpen(false)}
+                    >
                       Cancelar
                     </Button>
-                    <Button variant="destructive" onClick={handleDeletarTodasAlocacoes}>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeletarTodasAlocacoes}
+                    >
                       Excluir
                     </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
-              <Dialog open={isDialogAllocateOpen} onOpenChange={setIsDialogAllocateOpen}>
+
+              <Dialog
+                open={isDialogAllocateOpen}
+                onOpenChange={setIsDialogAllocateOpen}
+              >
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>Alocar Automaticamente</DialogTitle>
                   </DialogHeader>
                   <p>
-                    Tem certeza que deseja <b>alocar automaticamente</b> todas as turmas em salas disponíveis?
-                    Essa ação tentará alocar turmas automaticamente com base nas regras definidas.
+                    Tem certeza que deseja <b>alocar automaticamente</b> todas
+                    as turmas em salas disponíveis? Essa ação tentará alocar
+                    turmas automaticamente com base nas regras definidas.
                   </p>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsDialogAllocateOpen(false)}>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsDialogAllocateOpen(false)}
+                    >
                       Cancelar
                     </Button>
-                    <Button variant="default" onClick={handleAlocarAutomaticamente}>
+                    <Button
+                      variant="default"
+                      onClick={handleAlocarAutomaticamente}
+                    >
                       Confirmar Alocação
                     </Button>
                   </DialogFooter>
