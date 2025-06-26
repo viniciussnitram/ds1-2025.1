@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ClassService } from "@/services/ClassService";
+// import { ClassService } from "@/services/ClassService";
 import { useState } from "react";
 import * as XLSX from 'xlsx';
 
@@ -59,34 +59,34 @@ export default function Home() {
     };
   }
 
-  const handleUploadExcel = async () => {
-    if (!selectedFile) {
-      alert("Por favor, selecione um arquivo.");
-      return;
-    }
+  // const handleUploadExcel = async () => {
+  //   if (!selectedFile) {
+  //     alert("Por favor, selecione um arquivo.");
+  //     return;
+  //   }
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
+  //   const formData = new FormData();
+  //   formData.append("file", selectedFile);
 
-    ClassService.createReportClass(formData)
-      .then(() => {
-        console.log(response.data);
-        setTabelaOriginal([]);
-        setTabela([]);
-        setDialogOpen(false);
-      })
-      .catch((error) => {
-        console.error("Erro ao enviar o arquivo:", error);
-      });
-  };
+  //   ClassService.createReportClass(formData)
+  //     .then(() => {
+  //       console.log(response.data);
+  //       setTabelaOriginal([]);
+  //       setTabela([]);
+  //       setDialogOpen(false);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Erro ao enviar o arquivo:", error);
+  //     });
+  // };
 
-  const handleEncerrarPeriodo = async () => {
-    ClassService.clearSemester()
-      .then(() => setDialogOpen2(false))
-      .catch((error) => {
-        console.error('Não foi possível limpar o semestre.', error);
-      });
-  }
+  // const handleEncerrarPeriodo = async () => {
+  //   ClassService.clearSemester()
+  //     .then(() => setDialogOpen2(false))
+  //     .catch((error) => {
+  //       console.error('Não foi possível limpar o semestre.', error);
+  //     });
+  // }
 
   return (
     <main className="mb-20">
@@ -119,7 +119,7 @@ export default function Home() {
               <form>
                 <DialogFooter>
                   <Button type="button" variant="outline" onClick={() => setDialogOpen2(false)}>Cancelar</Button>
-                  <Button type="button" onClick={handleEncerrarPeriodo}>Sim</Button>
+                  {/* <Button type="button" onClick={handleEncerrarPeriodo}>Sim</Button> */}
                 </DialogFooter>
               </form>
             </DialogContent>

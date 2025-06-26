@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RoomsService } from "@/services/RoomsService";
+import { SalaService } from "@/services/SalaService";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -54,7 +54,7 @@ export default function CadastrarSala() {
   });
 
   useEffect(() => {
-    RoomsService.getAllRooms()
+    SalaService.getAllSalas()
       .then(setTabela)
       .catch((error) => {
         console.log('Não foi possível requisitar todas as salas', error);
@@ -65,15 +65,15 @@ export default function CadastrarSala() {
     event.preventDefault();
 
     const payload = {
+      bloco: bloco,
+      numero: numero,
       capacidadeMaxima: capacidade,
       possuiLaboratorio: lab ? lab : false,
       possuiArCondicionado: ar ? ar : false,
       possuiLoucaDigital: lousa ? lousa : false,
-      bloco: bloco,
-      numero: numero,
     };
 
-    RoomsService.createRoom(payload)
+    SalaService.createSala(payload)
       .then((response) => {
         setTabela((prevTable) => [...prevTable, response.data]);
       })
@@ -104,7 +104,7 @@ export default function CadastrarSala() {
       tempo: parseInt(selectedHorario),
     };
 
-    RoomsService.postUnavailableRoom(selectedSalaId, indisponibilidade)
+    SalaService.createIndisponibilidadeSala(selectedSalaId, indisponibilidade)
       .then(() => alert("Indisponibilidade adicionada com sucesso."))
       .catch((error) => {
         alert("Erro ao adicionar indisponibilidade.");
@@ -136,7 +136,7 @@ export default function CadastrarSala() {
 
   // Atualizar os dados da sala
   const handleUpdateSala = async () => {
-    RoomsService.updateRoom(editSala.id, editSala)
+    SalaService.editSala(editSala.id, editSala)
       .then(() => {
         setTabela((prev) => prev.map((s) => (s.id === editSala.id ? editSala : s)));
       })
@@ -149,7 +149,7 @@ export default function CadastrarSala() {
   const handleDeleteSala = async () => {
     let indisponibilidades = [];
 
-    RoomsService.getRoomById(selectedSalaId)
+    SalaService.getSalaById(selectedSalaId)
       .then(async (response) => {
         indisponibilidades = response.data.indisponibilidades;
 
@@ -161,7 +161,7 @@ export default function CadastrarSala() {
 
         // 2. Deletar cada indisponibilidade individualmente
         for (const indisponibilidade of indisponibilidades) {
-          RoomsService.deleteUnavailableRoom(selectedSalaId, indisponibilidade.id)
+          SalaService.deleteIndisponibilidadeSala(selectedSalaId, indisponibilidade.id)
         }
 
         // 3. Atualizar a tabela de indisponibilidades e fechar o modal
@@ -177,7 +177,7 @@ export default function CadastrarSala() {
 
   //Função para Buscar Indisponibilidades
   const fetchIndisponibilidades = async (salaId) => {
-    RoomsService.getRoomById(salaId)
+    SalaService.getSalaById(salaId)
       .then((response) => {
         console.log("Dados da sala recebidos:", response.data);
 
@@ -626,7 +626,6 @@ export default function CadastrarSala() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </main>
   );
 }

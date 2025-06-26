@@ -19,9 +19,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ClassService } from "@/services/ClassService";
-import { DisciplineService } from "@/services/DisciplineService";
-import { RoomsService } from "@/services/RoomsService";
+// import { ClassService } from "@/services/ClassService";
+import { SalaService } from "@/services/SalaService";
+import { TurmaService } from "@/services/TurmaService";
 import { Eye, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -82,34 +82,34 @@ export default function AlocarTurmaSala() {
       console.log("Dados do Excel:", parsedData);
     };
   };
-  const handleUploadExcel = async () => {
-    try {
-      if (!selectedFile) {
-        alert("Por favor, selecione um arquivo.");
-        return;
-      }
+  // const handleUploadExcel = async () => {
+  //   try {
+  //     if (!selectedFile) {
+  //       alert("Por favor, selecione um arquivo.");
+  //       return;
+  //     }
 
-      const formData = new FormData();
-      formData.append("file", selectedFile);
-      const response = await ClassService.createReportClass(formData);
-      console.log(response.data);
-      setUploadDialogOpen(false);
-      getTurmasData(); // Atualiza a tabela após upload
-    } catch (error) {
-      console.error("Erro ao enviar o arquivo:", error);
-    }
-  };
+  //     const formData = new FormData();
+  //     formData.append("file", selectedFile);
+  //     const response = await SalaService.createRelatorioFinal(formData);
+  //     console.log(response.data);
+  //     setUploadDialogOpen(false);
+  //     getTurmasData(); // Atualiza a tabela após upload
+  //   } catch (error) {
+  //     console.error("Erro ao enviar o arquivo:", error);
+  //   }
+  // };
 
   //Função para encerrar período
-  const handleEncerrarPeriodo = async () => {
-    try {
-      ClassService.clearSemester();
-      alert("Período letivo encerrado com sucesso!");
-      getTurmasData(); // Atualiza a tabela após encerramento
-    } catch (error) {
-      console.log('Erro ao encerrar período letivo.', error);
-    }
-  };
+  // const handleEncerrarPeriodo = async () => {
+  //   try {
+  //     ClassService.clearSemester();
+  //     alert("Período letivo encerrado com sucesso!");
+  //     getTurmasData(); // Atualiza a tabela após encerramento
+  //   } catch (error) {
+  //     console.log('Erro ao encerrar período letivo.', error);
+  //   }
+  // };
 
   //Atualiza tabela
   const [loading, setLoading] = useState(false);
@@ -147,13 +147,13 @@ export default function AlocarTurmaSala() {
     const getTurmasData = async () => {
       setLoading(true); // Ativa o estado de carregamento
 
-      ClassService.getAllClasses()
+      SalaService.getAllSalas()
         .then((response) => {
           const turmas = response.data;
 
           const turmasComAlocacoes = Promise.all(
             turmas.map(async (turma) => {
-              ClassService.getClassById(turma.id)
+              SalaService.getSalaById(turma.id)
                 .then((alocacoesResponse) => {
                   const alocacoes = alocacoesResponse.data.alocacoes || [];
                   const alocacaoAtual = alocacoes[0]; // Considera a primeira alocação, se existir
@@ -192,7 +192,7 @@ export default function AlocarTurmaSala() {
     };
 
     const getSalasData = async () => {
-      RoomsService.getAllRooms()
+      SalaService.getAllSalas()
         .then(setSalas)
         .catch((error) => {
           console.log('Erro ao requisitar todas as salas.', error);
@@ -211,7 +211,7 @@ export default function AlocarTurmaSala() {
       tempoSala: parseInt(filterHora),
     }
 
-    ClassService.allocateClass(turma)
+    TurmaService.createAlocacaoTurma(turma)
       .then((response) => {
         setDialogOpen(false);
         console.log(response.data);
@@ -232,7 +232,7 @@ export default function AlocarTurmaSala() {
 
       const salasDisponiveisPorHorario = await Promise.all(
         horarios.map(async (horario) => {
-          const response = await ClassService.getAllAvailableRooms(turma.id, horario.diaSemana, horario.tempoAula);
+          const response = await SalaService.getAllSalasDisponiveis(turma.id, horario.diaSemana, horario.tempoAula);
 
           return response.data || [];
         })
@@ -277,7 +277,7 @@ export default function AlocarTurmaSala() {
           tempoSala: horario.tempoAula,
         };
 
-        await ClassService.allocateClass(payload);
+        await TurmaService.createAlocacaoTurma(payload);
       }
 
       // Atualiza o estado local da tabela para refletir a mudança
@@ -301,7 +301,7 @@ export default function AlocarTurmaSala() {
 
   const handleAlocacoesTurma = async (id) => {
     try {
-      const response = await ClassService.getClassById(id);
+      const response = await SalaService.getSalaById(id);
       const alocacoes = response.data.alocacoes || [];
 
       const diasDaSemana = [
@@ -338,7 +338,7 @@ export default function AlocarTurmaSala() {
   };
 
   const handleGerarRelatorioFinal = async () => {
-    RoomsService.createFinalReportRoom(diaPDF)
+    SalasService.createFinalReportRoom(diaPDF)
       .then((response) => {
         // Criar um link temporário para fazer o download do arquivo
         const blob = new Blob([response.data], { type: "application/pdf" });
@@ -400,7 +400,7 @@ export default function AlocarTurmaSala() {
       throw new Error("ID da disciplina não encontrado.");
     }
 
-    DisciplineService.getDisciplineById(disciplinaId)
+    DisciplinaService.getDisciplinaById(disciplinaId)
       .then((response) => {
         setSelectedDisciplina(response.data); // Define a disciplina selecionada no estado
         setDialogEditOpen(true); // Abre o modal para edição
@@ -424,7 +424,7 @@ export default function AlocarTurmaSala() {
       necessitaArCondicionado: selectedDisciplina.necessitaArCondicionado,
     };
 
-    DisciplineService.updateDiscipline(selectedDisciplina.id, payload)
+    DisciplinaService.editDisciplina(selectedDisciplina.id, payload)
       .then(() => {
         // Atualiza a tabela localmente
         const updatedTabela = tabela.map((row) => {
@@ -453,7 +453,7 @@ export default function AlocarTurmaSala() {
   //atualiza a tela quando mudada preferencias da disciplina
   const getTurmasData = async () => {
     try {
-      const response = await ClassService.getAllClasses();
+      const response = await SalaService.getAllSalas();
       const mapResponse = response.data.map((turma) => ({
         id: turma.id,
         professor: turma.professor,
@@ -475,7 +475,7 @@ export default function AlocarTurmaSala() {
   useEffect(() => {
     getTurmasData();
     const getSalasData = async () => {
-      RoomsService.getAllRooms()
+      SalaService.getAllSalas()
         .then(setSalas)
         .catch((error) => {
           console.log('Erro ao solicitar todas as salas.', error);
@@ -494,7 +494,7 @@ export default function AlocarTurmaSala() {
 
     let alocacoes = [];
 
-    RoomsService.getRoomById(selectedSalaId)
+    SalaService.getSalaById(selectedSalaId)
       .then((response) => {
         alocacoes = response.data.alocacoes;
 
@@ -520,7 +520,7 @@ export default function AlocarTurmaSala() {
 
   const handleDeletarAlocacao = async (turmaId) => {
     try {
-      const response = await ClassService.getClassById(turmaId);
+      const response = await SalaService.getSalaById(turmaId);
       const alocacoes = response.data.alocacoes || [];
 
       if (alocacoes.length === 0) {
@@ -529,7 +529,7 @@ export default function AlocarTurmaSala() {
       }
 
       for (const alocacao of alocacoes) {
-        await ClassService.deallocateClass(alocacao.id);
+        await TurmaService.deleteAlocacaoTurma(alocacao.id);
       }
 
       // Atualiza a tabela localmente
@@ -546,28 +546,28 @@ export default function AlocarTurmaSala() {
     }
   };
   //Função para alocar turmas automaticamente
-  const handleAlocarAutomaticamente = async () => {
-    try {
-      setLoading(true); // Exibe o estado de carregamento
-      const response = await ClassService.allocateClassAutomatically();
-      //alert("Alocação automática realizada com sucesso!");
-      //await getTurmasData(); // Atualiza a tabela
-      window.location.reload(); // Recarrega a página após salvar
-    } catch (error) {
-      console.error("Erro ao alocar turmas automaticamente:", error);
-      alert("Erro ao alocar turmas automaticamente.");
-    } finally {
-      setLoading(false); // Remove o estado de carregamento
-      setIsDialogAllocateOpen(false); // Fecha o diálogo
-    }
-  };
+  // const handleAlocarAutomaticamente = async () => {
+  //   try {
+  //     setLoading(true); // Exibe o estado de carregamento
+  //     const response = await ClassService.allocateClassAutomatically();
+  //     //alert("Alocação automática realizada com sucesso!");
+  //     //await getTurmasData(); // Atualiza a tabela
+  //     window.location.reload(); // Recarrega a página após salvar
+  //   } catch (error) {
+  //     console.error("Erro ao alocar turmas automaticamente:", error);
+  //     alert("Erro ao alocar turmas automaticamente.");
+  //   } finally {
+  //     setLoading(false); // Remove o estado de carregamento
+  //     setIsDialogAllocateOpen(false); // Fecha o diálogo
+  //   }
+  // };
   //Função para deletar todas as alocações
   const handleDeletarTodasAlocacoes = async () => {
     try {
       setLoading(true); // Exibe o estado de carregamento
 
       // Busque todas as turmas para obter as alocações
-      const response = await ClassService.getAllClasses();
+      const response = await SalaService.getAllSalas();
       const turmas = response.data;
 
       if (!turmas || turmas.length === 0) {
@@ -577,11 +577,11 @@ export default function AlocarTurmaSala() {
 
       // Itere sobre as turmas e delete suas alocações
       for (const turma of turmas) {
-        const alocacoesResponse = await ClassService.getClassById(turma.id);
+        const alocacoesResponse = await SalaService.getSalaById(turma.id);
         const alocacoes = alocacoesResponse.data.alocacoes || [];
 
         for (const alocacao of alocacoes) {
-          await ClassService.deallocateClass(alocacao.id);
+          await SalaService.deleteIndisponibilidadeSala(alocacao.id);
         }
       }
 
