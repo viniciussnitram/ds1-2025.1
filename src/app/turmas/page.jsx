@@ -15,7 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
+import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,8 @@ import { SalaService } from "@/services/SalaService";
 import { TurmaService } from "@/services/TurmaService";
 import { Eye, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+const html2pdf = dynamic(() => import("html2pdf.js"), { ssr: false });
 
 export default function AlocarTurmaSala() {
   const [tabela, setTabela] = useState([]);
@@ -518,6 +520,7 @@ export default function AlocarTurmaSala() {
       });
   };
 
+
   const handleDeletarAlocacao = async (turmaId) => {
     try {
       const response = await SalaService.getSalaById(turmaId);
@@ -601,6 +604,31 @@ export default function AlocarTurmaSala() {
     }
   };
 
+  const gerarPDF = async () => {
+    const html2pdf = (await import("html2pdf.js")).default;
+
+    const html = `
+    <div style="padding: 20px; font-family: Arial;">
+      
+    </div>
+  `;
+
+    const elemento = document.createElement("div");
+    elemento.innerHTML = html;
+
+    const options = {
+      margin: 10,
+      filename: "relatorio.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    };
+
+    html2pdf().set(options).from(elemento).save();
+  };
+
+
+
   return (
     <main className="mb-20">
       {loading ? (
@@ -661,7 +689,7 @@ export default function AlocarTurmaSala() {
                   <option value="2">2</option>
                   <option value="3">3</option>
                 </select>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {/* Botão para importar Excel */}
                   <button
                     className="rounded-md bg-blue-600 text-white p-2 min-w-[200px] h-[60px] text-center"
@@ -682,7 +710,7 @@ export default function AlocarTurmaSala() {
                   {/* Botão para gerar relatório */}
                   <button
                     className="rounded-md bg-blue-600 text-white p-2 min-w-[200px] h-[60px] text-center"
-                    onClick={() => setDialog3(true)}
+                    onClick={() => gerarPDF()}
                   >
                     Gerar Relatório Final
                   </button>
@@ -1060,7 +1088,7 @@ export default function AlocarTurmaSala() {
                       Cancelar
                     </Button>
                     <Button
-                      onClick={handleUploadExcel}
+                      // onClick={handleUploadExcel}
                       disabled={!selectedFile}
                     >
                       Confirmar Importação
@@ -1091,7 +1119,7 @@ export default function AlocarTurmaSala() {
                     </Button>
                     <Button
                       variant="destructive"
-                      onClick={handleEncerrarPeriodo}
+                    // onClick={handleEncerrarPeriodo}
                     >
                       Confirmar
                     </Button>
@@ -1251,7 +1279,7 @@ export default function AlocarTurmaSala() {
                     </Button>
                     <Button
                       variant="default"
-                      onClick={handleAlocarAutomaticamente}
+                    // onClick={handleAlocarAutomaticamente}
                     >
                       Confirmar Alocação
                     </Button>

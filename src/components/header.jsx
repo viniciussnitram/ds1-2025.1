@@ -9,6 +9,7 @@ export const siteRoutes = [
   { href: '/turmas', label: 'Turmas' },
 ]
 
+
 export default function Header() {
   const pathname = usePathname();
   return (
@@ -36,6 +37,7 @@ export default function Header() {
               <div className="p-3 hover:bg-blue-700 rounded-lg hover:text-white">{siteRoute.label}</div>
             </Link>
           </li>
+          
         ))}
       </ul>
     </header>
